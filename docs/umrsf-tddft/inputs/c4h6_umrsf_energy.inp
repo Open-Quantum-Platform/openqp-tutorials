@@ -1,0 +1,43 @@
+# UMRSF-TDDFT single-point excitation energies of butadiene (C4H6)
+# BHHLYP / 6-31G*  -- energy only
+#
+# What makes this "U"MRSF rather than plain MRSF:
+#
+#    section          keyword        value
+#   ----------------------------------------------
+#    [input]           runtype       energy
+#    [input]           method        tdhf
+#    [scf]             type          uhf     <-- UHF reference (the "U")
+#    [scf]             multiplicity  3       <-- high-spin (triplet) reference
+#    [tdhf]            type          umrsf   <-- unrestricted MRSF response
+#    [tdhf]            multiplicity  1       <-- solve singlet target states
+#
+# UMRSF spin-flips out of a UHF triplet reference. Plain MRSF uses an ROHF
+# reference (type=rohf / type=mrsf); everything else is identical.
+
+[input]
+system=
+ 6   -1.901080641    0.114577198    0.000000000
+ 6   -0.574900598   -0.402237631    0.000000000
+ 6    1.901080641   -0.114577198    0.000000000
+ 6    0.574900598    0.402237631    0.000000000
+ 1   -2.755248674   -0.545115910    0.000000000
+ 1   -2.071562576    1.183086840    0.000000000
+ 1    2.755248674    0.545115910    0.000000000
+ 1   -0.441348756   -1.477941036    0.000000000
+ 1    2.071562576   -1.183086840    0.000000000
+ 1    0.441348756    1.477941036    0.000000000
+charge=0
+runtype=energy
+method=tdhf
+functional=bhhlyp
+basis=6-31g*
+
+[scf]
+type=uhf
+multiplicity=3
+
+[tdhf]
+type=umrsf
+nstate=5
+multiplicity=1

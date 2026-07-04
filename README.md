@@ -1,49 +1,55 @@
 # OpenQP Tutorials
 
 Hands-on, runnable tutorials for **[OpenQP](https://github.com/Open-Quantum-Platform/openqp)**
-(Open Quantum Platform) — the MRSF-TDDFT quantum-chemistry package.
+(Open Quantum Platform). Every tutorial shows the calculation in **both** the
+classic **input-file** style and the compact **Python API**.
 
-Where the pieces fit:
+📖 **Read the tutorials book:** <https://open-quantum-platform.github.io/openqp-tutorials/>
 
-| Resource | What it is |
-| --- | --- |
-| **[openqp](https://github.com/Open-Quantum-Platform/openqp)** | the code: the QM engine, the `openqp` CLI, and the packaged `examples/`. |
-| **[openqp-docs](https://open-quantum-platform.github.io/openqp-docs/)** | the manual: reference documentation for every method, workflow, and keyword. |
-| **openqp-tutorials** (this repo) | guided, explanatory walkthroughs — the *why* and *how*, end to end, with decks you can run. |
+This repository is a [MkDocs](https://www.mkdocs.org/) site (same look and feel as
+the [OpenQP manual](https://open-quantum-platform.github.io/openqp-docs/)). Each
+tutorial lives in `docs/<topic>/` with an `index.md` walkthrough and an `inputs/`
+folder of ready-to-run decks.
 
-Tutorials teach a workflow from motivation to result; the manual is the reference
-you reach for once you know what you are doing.
-
-## Tutorials
-
-| Tutorial | What you learn |
-| --- | --- |
-| [SOC-NAMD-QMMM](soc-namd-qmmm/) | Excited-state surface-hopping dynamics of an MRSF-TDDFT chromophore, with spin-orbit **intersystem crossing**, embedded in an explicit MM environment — built up one ingredient at a time and run on formaldehyde in water. |
-
-*(more coming — contributions welcome)*
-
-## Getting started
+## Install
 
 ```bash
 pip install openqp      # the QM engine + `openqp` CLI
 pip install openmm      # optional MM backend (needed for the QM/MM tutorials)
 ```
 
-Each tutorial folder has a `README.md` walkthrough and an `inputs/` directory
-with ready-to-run decks:
+## Run a tutorial (either style)
 
 ```bash
-cd soc-namd-qmmm/inputs
-openqp h2co-water_soc-namd-qmmm.inp
+openqp docs/mrsf-tddft/inputs/h2o_mrsf.inp     # input-file style
+python docs/mrsf-tddft/inputs/h2o_mrsf.py      # Python-API style
+```
+
+## Contents
+
+**Electronic structure** — Hartree-Fock & DFT · MP2 · TDDFT/TDHF · Spin-flip
+TDDFT · MRSF-TDDFT · UMRSF-TDDFT
+**Excited states & dynamics** — Spin-orbit coupling · Conical intersections ·
+SOC-NAMD-QMMM
+**Geometry & properties** — Optimization & TS · Hessians/frequencies/IR/Raman ·
+NMR shielding · Population, moments & MRSF analysis
+**Environment** — PCM/ddX solvation · ESPF QM/MM embedding
+**SCF & basis** — SCF convergence & guesses · Effective core potentials
+
+## Build the book locally
+
+```bash
+pip install -r docs/requirements.txt
+mkdocs serve       # live preview at http://127.0.0.1:8000
 ```
 
 ## Contributing
 
-A tutorial is a self-contained folder with a `README.md` (motivation → theory →
-annotated input → run → interpret → extend) and an `inputs/` directory of small,
-fast, runnable decks. Prefer minimal systems that finish in seconds so readers can
-iterate. Link to the [manual](https://open-quantum-platform.github.io/openqp-docs/)
-for reference depth rather than duplicating it.
+A tutorial is `docs/<topic>/index.md` (motivation → theory → annotated input →
+Python → run → interpret) plus an `inputs/` folder of small, fast decks. Add it to
+the `nav` in `mkdocs.yml`. Link to the
+[manual](https://open-quantum-platform.github.io/openqp-docs/) for reference depth
+rather than duplicating it.
 
 ## License
 

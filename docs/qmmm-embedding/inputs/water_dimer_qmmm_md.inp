@@ -1,0 +1,30 @@
+# Ground-state ESPF QM/MM molecular dynamics (runtype=md).
+#
+# Same water dimer as the single-point deck, now propagated with an OpenMM
+# integrator: the QM water (atoms 0-2) moves under the embedded QM/ESPF force,
+# the MM water under the force field, coupled through ESPF electrostatics.
+# This is the ground-state QM/MM MD path (QMMM_MD); it needs OpenMM and is not
+# part of `openqp --run_tests all`.  For EXCITED-state / nonadiabatic QM/MM
+# dynamics use runtype=namd instead (see the SOC-NAMD-QMMM tutorial).
+[input]
+runtype    = md                      # ground-state QM/MM MD (OpenMM integrator)
+qmmm_flag  = True
+method     = hf
+functional = bhhlyp
+basis      = 6-31g
+charge     = 0
+
+[scf]
+type         = rhf
+multiplicity = 1
+
+[qmmm]
+pdb_file         = water_dimer.pdb   # full QM+MM system (MD path reads it here)
+forcefield_files = tip3p.xml
+qm_atoms         = 0-2               # 0-based indices of the QM water
+cutoff           = NoCutoff          # isolated cluster (use PME for a periodic box)
+embedding        = electrostatic     # full ESPF electrostatic embedding
+n_steps          = 5                 # number of MD steps (raise for a real run)
+timestep         = 0.5               # fs
+ensemble         = nve               # microcanonical (Verlet); nvt/npt = Langevin
+temperature      = 300.0             # K (initial velocities / thermostat target)

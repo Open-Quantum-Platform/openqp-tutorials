@@ -1,0 +1,28 @@
+# Spin-flip TDDFT / 6-31G* / BHHLYP on H2O
+# A high-spin (triplet) ROHF reference is spin-flipped down to reach the
+# singlet manifold. This deck computes the SF-TDDFT energies and the gradient
+# of the lowest SF root (the multiconfigurational ground state, grad=3 here).
+[input]
+system=
+   8   0.000000000   0.000000000  -0.041061554
+   1  -0.533194329   0.533194329  -0.614469223
+   1   0.533194329  -0.533194329  -0.614469223
+charge=0
+runtype=grad            # energy + gradient; use runtype=energy for energy only
+basis=6-31g*
+functional=bhhlyp       # half-and-half functional recommended for spin-flip
+method=tdhf             # the [tdhf] response engine drives SF-TDDFT
+
+[guess]
+type=huckel             # extended-Huckel initial orbitals
+
+[scf]
+multiplicity=3          # HIGH-SPIN triplet reference (the SF starting point)
+type=rohf               # SF-TDDFT requires an ROHF reference
+
+[tdhf]
+type=sf                 # spin-flip TDDFT (not rpa/tda/mrsf)
+nstate=3                # number of spin-flip roots to solve
+
+[properties]
+grad=3                  # gradient of SF root 3 (for SF, root 1 is the lowest/S0)

@@ -1,0 +1,24 @@
+# TDDFT / 6-31G* / B3LYP5 vertical excitation energies of H2O.
+# Closed-shell singlet, so [scf] type=rhf and multiplicity=1.
+# method=tdhf drives all linear-response models; the non-empty functional
+# makes it TDDFT.  Drop `functional` to get plain TDHF instead.
+[input]
+system=
+   8   0.000000000   0.000000000  -0.041061554
+   1  -0.533194329   0.533194329  -0.614469223
+   1   0.533194329  -0.533194329  -0.614469223
+charge=0
+runtype=energy
+basis=6-31g*
+functional=b3lyp5
+method=tdhf
+
+[guess]
+type=huckel
+
+[scf]
+multiplicity=1
+type=rhf
+
+[tdhf]
+nstate=3

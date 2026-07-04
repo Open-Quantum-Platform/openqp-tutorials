@@ -13,7 +13,7 @@ By the end you will understand:
 - how to run the calculation and read the trajectory it produces, and
 - how to grow the minimal demo into a production run.
 
-The runnable inputs are in [`inputs/`](inputs/); the reference manual for every
+The runnable inputs are in [`inputs/`](https://github.com/Open-Quantum-Platform/openqp-tutorials/tree/main/docs/soc-namd-qmmm/inputs); the reference manual for every
 keyword is the [OpenQP manual](https://open-quantum-platform.github.io/openqp-docs/),
 in particular the [SOC-NAMD-QMMM workflow page](https://open-quantum-platform.github.io/openqp-docs/workflows/soc-namd-qmmm/)
 and the [`[md]`](https://open-quantum-platform.github.io/openqp-docs/keywords/md/)
@@ -232,13 +232,52 @@ on the particle-mesh-Ewald branch of the embedding.
 
 ---
 
-## 5. Running it
+## 5. The same run, in Python
 
-From the `inputs/` folder (so the PDB/force-field files resolve):
+The compact `OpenQP` scripting interface builds the identical calculation —
+`job.theory.mrsf(...)` sets the reference and states, `job.qmmm(...)` turns on the
+embedding, and `job.workflow.namd(soc=True, ...)` selects `runtype=namd` and fills
+the `[md]` section:
+
+```python
+from oqp.openqp import OpenQP
+
+job = OpenQP("h2co-water_soc-namd-qmmm", silent=1)
+
+job.molecule("""
+    C   0.000000   0.000000   0.000000
+    O   0.000000   0.000000   1.203000
+    H   0.000000   0.943000  -0.589000
+    H   0.000000  -0.943000  -0.589000
+""", charge=0)
+
+job.theory.mrsf(functional="bhhlyp", basis="6-31g*", nstate=2, multiplicity=3)
+
+job.qmmm(
+    pdb_file="formaldehyde_water.pdb",
+    forcefield=["formaldehyde.xml", "tip3p.xml"],
+    qm_atoms="0-3", cutoff="NoCutoff", embedding="electrostatic",
+)
+
+job.workflow.namd(
+    soc=True, nstep=1, dt=0.25, active=5, substep=50,
+    init_temp=300, velocity="maxwell", seed=3,
+    decoherence="edc", trivial=True, thrshe=0.1,
+)
+
+mol = job.run()
+```
+
+The full script is [`inputs/h2co-water_soc-namd-qmmm.py`](inputs/h2co-water_soc-namd-qmmm.py).
+
+## 6. Running it
+
+From the `inputs/` folder (so the PDB/force-field files resolve), either style:
 
 ```bash
 cd soc-namd-qmmm/inputs
-openqp h2co-water_soc-namd-qmmm.inp
+openqp h2co-water_soc-namd-qmmm.inp     # input-file style
+python h2co-water_soc-namd-qmmm.py      # Python-API style
 ```
 
 What OpenQP does at **each nuclear step**:
@@ -259,7 +298,7 @@ The run writes a log (`<project>.log`) and a trajectory.
 
 ---
 
-## 6. Reading the output and going further
+## 7. Reading the output and going further
 
 The `.log` records, per step: the electronic-state energies, the **active state**,
 the hopping probabilities, the SOC couplings, and the kinetic/potential/total
@@ -285,7 +324,7 @@ set `[md] soc_basis=mch`. See the workflow page for the trade-offs.
 
 ---
 
-## 7. Recap
+## 8. Recap
 
 You combined four ideas into one simulation:
 

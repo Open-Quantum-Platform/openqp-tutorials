@@ -1,0 +1,19 @@
+# RHF/6-31G* single-point energy of water.
+# Closed-shell singlet -> type=rhf, multiplicity=1. HF is method=hf with an
+# empty functional; no [tdhf] section is needed for a ground-state SCF energy.
+[input]
+system=
+   8   0.000000000   0.000000000  -0.041061554
+   1  -0.533194329   0.533194329  -0.614469223
+   1   0.533194329  -0.533194329  -0.614469223
+charge=0
+runtype=energy
+basis=6-31g*
+method=hf
+
+[guess]
+type=huckel
+
+[scf]
+multiplicity=1
+type=rhf

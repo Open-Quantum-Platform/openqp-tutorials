@@ -1,0 +1,52 @@
+site_name: OpenQP Tutorials
+site_description: Hands-on, runnable tutorials for the Open Quantum Platform (OpenQP)
+site_url: https://open-quantum-platform.github.io/openqp-tutorials/
+repo_url: https://github.com/Open-Quantum-Platform/openqp-tutorials
+repo_name: Open-Quantum-Platform/openqp-tutorials
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+
+nav:
+  - Home: index.md
+  - Electronic structure:
+      - Hartree-Fock and DFT: hf-and-dft/index.md
+      - MP2 and spin-scaled MP2: mp2/index.md
+      - TDDFT and TDHF: tddft-and-tdhf/index.md
+      - Spin-flip TDDFT: sf-tddft/index.md
+      - MRSF-TDDFT: mrsf-tddft/index.md
+      - UMRSF-TDDFT: umrsf-tddft/index.md
+  - Excited states and dynamics:
+      - Spin-orbit coupling: spin-orbit-coupling/index.md
+      - Conical intersections: conical-intersections/index.md
+      - SOC-NAMD-QMMM: soc-namd-qmmm/index.md
+  - Geometry and properties:
+      - Geometry optimization and TS: geometry-optimization/index.md
+      - Hessians, frequencies, IR/Raman: vibrational-analysis/index.md
+      - NMR shielding: nmr-shielding/index.md
+      - Population, moments, MRSF analysis: properties-and-population/index.md
+  - Environment (QM/MM and solvation):
+      - PCM/ddX solvation: pcm-solvation/index.md
+      - ESPF QM/MM embedding: qmmm-embedding/index.md
+  - SCF and basis:
+      - SCF convergence and guesses: scf-convergence/index.md
+      - Effective core potentials: effective-core-potentials/index.md

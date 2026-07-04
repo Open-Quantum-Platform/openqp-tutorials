@@ -1,0 +1,22 @@
+# RHF/6-31G* single-point energy of H2O, with SCF population/moment analysis.
+# Requests the electric dipole plus Mulliken, Lowdin, and RESP atomic charges.
+# Adapted from examples/PROP/H2O_RHF_PROPERTIES.inp.
+[input]
+system=
+   8   0.000000000   0.000000000  -0.041061554
+   1  -0.533194329   0.533194329  -0.614469223
+   1   0.533194329  -0.533194329  -0.614469223
+charge=0
+runtype=energy
+basis=6-31g*
+method=hf
+
+[guess]
+type=huckel
+
+[scf]
+multiplicity=1
+type=rhf
+
+[properties]
+scf_prop=el_mom,mulliken,lowdin,resp

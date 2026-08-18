@@ -32,9 +32,11 @@ the idea behind the **spin-component-scaled** family:
   entirely (cheaper) and is well suited to Laplace/RI accelerations.
 
 OpenQP computes the two spin components separately, so every preset is just a
-choice of `c_ss` and `c_os`. In OpenQP, MP2 is a **post-SCF, energy-only**
-workflow: it first converges an HF reference, then adds the correlation energy and
-reports the total `E(HF+MP2)`. The reference can be closed-shell **RHF**,
+choice of `c_ss` and `c_os`. In OpenQP, MP2 is a **post-SCF** workflow: it first
+converges an HF reference, then adds the correlation energy and reports the total
+`E(HF+MP2)`. An analytic **ground-state gradient** is available on an RHF
+reference, so `mp2/6-31g` also supports `grad` and `opt`; UHF/ROHF MP2 is
+energy-only. The reference can be closed-shell **RHF**,
 unrestricted **UHF**, or restricted-open-shell **ROHF** (ROHF orbitals are
 semicanonicalized before the correlation step so the energy denominators are well
 defined). For the derivation and the parameterizations behind each preset, see the

@@ -32,53 +32,43 @@ see the [OpenQP manual](https://open-quantum-platform.github.io/openqp-docs/).
 
 ## Input-file style
 
-The runnable deck is [`inputs/h2o_hess.inp`](inputs/h2o_hess.inp) — water at a
+The runnable deck is [`inputs/h2o_hess.oqp`](inputs/h2o_hess.oqp) — water at a
 BHHLYP/6-31G\* Kohn-Sham level, taking an analytical ground-state Hessian.
 Annotated:
 
-```ini
-[input]
-system=
-   O  -0.0000000000   0.0000000000  -0.0410615540   # O   (Angstrom)
-   H  -0.5331943294   0.5331943294  -0.6144692230   # H
-   H   0.5331943294  -0.5331943294  -0.6144692230   # H
-charge=0
-functional=bhhlyp       # BHHLYP hybrid -> a Kohn-Sham (DFT) reference
-basis=6-31g*
-runtype=hess            # build the Hessian (second derivatives)
-method=hf               # HF-family engine; with `functional` set this is KS-DFT
-
-[scf]
-type=rhf                # closed-shell restricted reference
-multiplicity=1          # singlet ground state
-
-[hess]
-type=analytical         # coupled-perturbed (analytic) Hessian; or `numerical`
-state=0                 # 0 = the SCF ground state
-clean=True              # delete the scratch Hessian files when done
+```text
+rks/bhhlyp/6-31g*                     # restricted Kohn-Sham, BHHLYP, 6-31G*
+hess(S0,type=analytical,clean=true)   # Hessian of the ground state
+geom="""
+O  -0.0000000000   0.0000000000  -0.0410615540
+H  -0.5331943294   0.5331943294  -0.6144692230
+H   0.5331943294  -0.5331943294  -0.6144692230
+"""
 ```
 
 Key points:
 
-- **`runtype=hess`** is what selects the Hessian workflow. It runs the SCF first,
-  then builds the second-derivative matrix and diagonalises it for frequencies,
-  normal modes, thermochemistry, and IR/Raman intensities — all written to the log.
-- **`method=hf` together with a non-empty `functional`** means a Kohn-Sham DFT
-  calculation (here BHHLYP). Leave `functional` empty for a pure Hartree-Fock
-  Hessian; the `[hess]` mechanics are identical either way.
-- The **reference is chosen in `[scf]`** via `type` (`rhf` for this closed-shell
-  singlet). Use `uhf`/`rohf` with the appropriate `multiplicity` for open-shell
-  systems.
-- In **`[hess]`**, `type=analytical` uses the coupled-perturbed (CPHF/CPKS)
-  equations — the fast, accurate default; switch to `type=numerical` to build the
-  Hessian by finite differences of the gradient (useful when analytic second
-  derivatives aren't available for a method). `state=0` takes the Hessian of the
-  ground state; `clean=True` removes the scratch Hessian files afterwards.
+- **`hess(...)` is the driver** that selects the Hessian workflow. It runs the SCF
+  first, then builds the second-derivative matrix and diagonalises it for
+  frequencies, normal modes, thermochemistry, and IR/Raman intensities — all
+  written to the log.
+- **`S0`** names the state physically: the ground state. Excited-state Hessians use
+  the same spelling — `hess(S1)` on an `mrsf` route, for example.
+- **`rks/bhhlyp/6-31g*`** is a Kohn-Sham DFT reference. Drop the functional
+  component (`rhf/6-31g*`) for a pure Hartree-Fock Hessian; the `hess(...)`
+  mechanics are identical either way. Use `uks`/`roks` with a `mult=` line for
+  open-shell systems.
+- **`type=analytical`** uses the coupled-perturbed (CPHF/CPKS) equations — the
+  fast, accurate choice; switch to `type=numerical` to build the Hessian by finite
+  differences of the gradient (useful when analytic second derivatives are not
+  available for a method). `clean=true` removes the scratch Hessian files
+  afterwards. Other `hess(...)` options include `dx` (displacement size for the
+  numerical path), `nproc`, `restart`, and `temperature`.
 
 > **Geometry note.** A Hessian is only meaningful at a **stationary point**. This
 > water geometry is already optimized for BHHLYP/6-31G\*; if you compute a Hessian
 > at an un-optimized geometry the residual forces contaminate the low frequencies.
-> Optimize first (`runtype=optimize`), then run the Hessian on that geometry.
+> Optimize first (`opt(S0)`), then run the Hessian on that geometry.
 
 ## Python style
 
@@ -131,7 +121,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd vibrational-analysis/inputs
-openqp h2o_hess.inp
+openqp h2o_hess.oqp
 ```
 
 Python style:

@@ -1,0 +1,12 @@
+# MRSF-TDDFT spin-orbit coupling of water (S/T manifold), BHHLYP/6-31G(2df,p).
+# soc(soc_2e=1) selects 1e Breit-Pauli + mean-field 2e SOC (soc_2e=0 = 1e only).
+# 2e SOC is not available with spherical AOs, hence ispher=false.
+mrsf(nstate=12)/bhhlyp/6-31g(2df,p)
+ispher=false
+soc(soc_2e=1)
+scf(scal_rel=2,converger_type=diis,maxit=200)
+geom="""
+O    0.000000000000   0.000000000000   0.000000000000
+H    0.772597940000   0.555677850000   0.000000000000
+H   -0.773127700000   0.555677850000   0.000000000000
+"""

@@ -42,55 +42,37 @@ removes the residual spin contamination of plain SF), see the
 
 ## Input-file style
 
-The runnable deck is [`inputs/h2o_sf-tddft.inp`](inputs/h2o_sf-tddft.inp) — water
-in the 6-31G\* basis, BHHLYP, energy **and** gradient of the lowest SF root.
-Annotated:
+The runnable deck is [`inputs/h2o_sf-tddft.oqp`](inputs/h2o_sf-tddft.oqp) — water
+in the 6-31G\* basis, BHHLYP, energy **and** gradient of an SF root. Annotated:
 
-```ini
-[input]
-system=
-   8   0.000000000   0.000000000  -0.041061554   # O   (Angstrom)
-   1  -0.533194329   0.533194329  -0.614469223   # H
-   1   0.533194329  -0.533194329  -0.614469223   # H
-charge=0
-runtype=grad            # energy + gradient; use runtype=energy for energy only
-basis=6-31g*
-functional=bhhlyp       # half-and-half functional recommended for spin-flip
-method=tdhf             # the [tdhf] response engine drives SF-TDDFT
-
-[guess]
-type=huckel             # extended-Huckel initial orbitals
-
-[scf]
-multiplicity=3          # HIGH-SPIN triplet reference (the SF starting point)
-type=rohf               # SF-TDDFT requires an ROHF reference
-
-[tdhf]
-type=sf                 # spin-flip TDDFT (not rpa/tda/mrsf)
-nstate=3                # number of spin-flip roots to solve
-
-[properties]
-grad=3                  # gradient of SF root 3 (for SF, root 1 is the lowest/S0)
+```text
+sf(nstate=3)/bhhlyp/6-31g*       # model(roots)/functional/basis
+grad(root=3)                     # energy + analytic gradient of SF root 3
+guess(type=huckel)               # extended-Huckel initial orbitals
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""
 ```
 
-Section by section:
+Key points:
 
-- **`[input]`** holds the geometry and the run type. `method=tdhf` selects the
-  linear-response engine that drives all of RPA/TDA/SF/MRSF; **`[tdhf] type=sf`**
-  is what specializes it to spin-flip. `runtype=grad` asks for energy **and**
-  gradient — switch to `runtype=energy` if you only want the state energies.
-  `functional=bhhlyp` is the recommended half-and-half functional; `basis=6-31g*`
-  is a modest polarized double-zeta set.
-- **`[guess] type=huckel`** builds the initial orbitals from an extended-Hückel
-  guess before the ROHF iterations.
-- **`[scf]`** defines the **reference**. `multiplicity=3` with `type=rohf` is the
-  high-spin triplet ROHF that spin-flip requires — this is non-negotiable for SF,
-  and is *not* the state whose energy you ultimately read.
-- **`[tdhf]`** is the response step. `type=sf` picks spin-flip (as opposed to
-  `rpa`, `tda`, or `mrsf`); `nstate=3` solves the three lowest spin-flip roots.
-- **`[properties] grad=3`** requests the gradient of SF **root 3**. Remember the
-  SF re-indexing: root 1 is the lowest (ground) state, so `grad=3` is the gradient
-  of the second excited SF root. Set `grad=1` for the ground-state gradient.
+- **`sf(nstate=3)/bhhlyp/6-31g*`** is the whole electronic model. `sf` carries the
+  **high-spin triplet ROHF reference** that spin-flip requires — that reference is
+  non-negotiable for SF, so the format supplies it rather than asking you to.
+  `nstate=3` solves the three lowest spin-flip roots. `bhhlyp` is the recommended
+  half-and-half functional; `sf-tdhf/6-31g*` drops the functional for SF-TDHF.
+- **`grad(root=3)`** is the driver. Note the `root=` spelling: unlike MRSF, the
+  spin-flip roots are **not spin-adapted before diagonalization**, so their
+  physical labels are not known in advance and there is no honest `S1` to write.
+  `root=1` is the lowest (multiconfigurational ground) state, so `root=3` is the
+  gradient of the second excited SF root. Use `energy()` for energies only.
+- **`guess(type=huckel)`** is an exact call into the legacy `[guess]` section.
+
+This is the one place the format asks for an implementation index instead of a
+physical label — and it does so because the physics, not the interface, is what
+makes the label unavailable.
 
 ## Python style
 
@@ -143,7 +125,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd sf-tddft/inputs
-openqp h2o_sf-tddft.inp
+openqp h2o_sf-tddft.oqp
 ```
 
 Python style:

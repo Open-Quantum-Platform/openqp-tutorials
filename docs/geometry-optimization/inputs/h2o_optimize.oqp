@@ -1,0 +1,10 @@
+# BHHLYP/6-31G* ground-state geometry optimization of water.
+# opt() is the driver; a ground-state model needs no state label.  The
+# coordinate system and trust radius are options of that driver.
+rks/bhhlyp/6-31g*
+opt(coordsys=tric,trust=0.2)
+geom="""
+O  -0.0000000000   0.0000000000  -0.0410615540
+H  -0.5331943294   0.5331943294  -0.6144692230
+H   0.5331943294  -0.5331943294  -0.6144692230
+"""

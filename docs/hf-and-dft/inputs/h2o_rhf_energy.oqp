@@ -1,0 +1,10 @@
+# RHF/6-31G* single-point energy of water.
+# The route "rhf/6-31g*" is the whole request: reference, basis, and -- with no
+# functional component -- pure Hartree-Fock.  energy() is the default driver.
+rhf/6-31g*
+guess(type=huckel)
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""

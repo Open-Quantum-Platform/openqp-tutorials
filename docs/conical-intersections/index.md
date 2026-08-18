@@ -39,79 +39,62 @@ the [OpenQP manual](https://open-quantum-platform.github.io/openqp-docs/).
 
 ## Input-file style
 
-The runnable deck is [`inputs/c2h4_mrsf_meci.inp`](inputs/c2h4_mrsf_meci.inp) —
+The runnable deck is [`inputs/c2h4_mrsf_meci.oqp`](inputs/c2h4_mrsf_meci.oqp) —
 twisted ethylene, BHHLYP/6-31G\*, MRSF-TDDFT, penalty-function MECI search.
 Annotated:
 
-```ini
-[input]
-system=
- C  -1.6699351346837055   0.1537249235528157  -1.5459803491111643   # twisted C=C
- C  -1.8079415266835852  -0.0386075716896284  -0.1602069788110266
- H  -2.6609567768367581   0.2572290722092156  -2.0290359598415040
- H  -1.2898503996116444  -0.7568524635289917  -2.0470428696820342
- H  -1.3096398768036397   0.6557118321425524   0.5396052278505126
- H  -2.3820842951209360  -0.7983813277099963   0.4308517619153288
-runtype=meci            # optimize onto a conical-intersection seam
-functional=bhhlyp       # half-and-half functional, standard for MRSF
-charge=0
-method=tdhf             # excited states via the TDHF/TDDFT engine (MRSF lives here)
-basis=6-31g*
-
-[scf]
-type=rohf               # MRSF is built on a restricted-open-shell reference
-maxit=30
-multiplicity=3          # ...specifically a TRIPLET reference to spin-flip from
-
-[tdhf]
-type=mrsf               # Mixed-Reference Spin-Flip TDDFT
-nstate=5                # solve 5 MRSF roots (S0 = root 1, S1 = root 2, ...)
-maxit=30
-
-[optimize]
-lib=oqp                 # use OpenQP's native geometry optimizer
-istate=1                # first  state of the crossing pair: S0
-jstate=2                # second state of the crossing pair: S1
-meci_search=penalty     # penalty-function branching-plane search
-pen_sigma=2.0           # initial penalty strength
-pen_incre=1.2           # factor by which the penalty is ramped each cycle
-energy_gap=2e-3         # target S0-S1 gap (Hartree) -> defines "degenerate"
-rmsd_grad=2e-3          # convergence: RMS gradient
-max_grad=4e-3           # convergence: max gradient component
-rmsd_step=4e-3          # convergence: RMS step
-max_step=8e-3           # convergence: max step component
-maxit=30                # max optimization cycles
-
-[oqp]
-coordsys=auto           # let the optimizer choose the coordinate system
-trust=0.15              # trust-radius (Bohr/rad) for each optimization step
+```text
+mrsf(nstate=5)/bhhlyp/6-31g*
+meci(S0,S1,algorithm=penalty,sigma=2.0,pen_incre=1.2,gap=2e-3,
+     rmsd_grad=2e-3,max_grad=4e-3,rmsd_step=4e-3,max_step=8e-3,
+     maxit=30,coordsys=auto,trust=0.15)
+scf(maxit=30)
+tdhf(maxit=30)
+geom="""
+C   -1.6699351346837055    0.1537249235528157   -1.5459803491111643
+C   -1.8079415266835852   -0.0386075716896284   -0.1602069788110266
+H   -2.6609567768367581    0.2572290722092156   -2.0290359598415040
+H   -1.2898503996116444   -0.7568524635289917   -2.0470428696820342
+H   -1.3096398768036397    0.6557118321425524    0.5396052278505126
+H   -2.3820842951209360   -0.7983813277099963    0.4308517619153288
+"""
 ```
+
+A long driver call like this may be wrapped across lines — the deck is split at
+top level, so anything inside the parentheses stays together.
 
 Key points:
 
-- **`runtype=meci`** is what turns this into a crossing-point optimization rather
-  than an ordinary geometry optimization or single-point. The same optimizer also
-  drives `optimize`, `ts`, `neb`, `irc`, and related run types; `meci` selects the
-  crossing-seam search.
-- **The excited-state block is the same MRSF recipe used everywhere else:**
-  `[scf] type=rohf multiplicity=3` sets up the triplet reference, and
-  `[tdhf] type=mrsf nstate=5` spin-flips to the balanced singlet/triplet manifold.
-  You need `nstate` large enough to contain both states of interest — here
-  `nstate=5` comfortably covers roots 1 and 2.
-- **`istate` / `jstate` name the two states to bring together** (1-based over the
-  MRSF roots). `istate=1, jstate=2` is the S₀/S₁ pair. To find an S₀/S₂ funnel you
-  would set `jstate=3`; for a spin-different MECP you would pick roots of different
-  spin from the manifold.
-- **`meci_search=penalty`** picks the penalty-function algorithm described above.
-  `pen_sigma` is its starting strength and `pen_incre` the per-cycle ramp factor;
-  `energy_gap` is the gap (in Hartree) below which the two states count as
-  degenerate. Loosening `energy_gap` gives a quicker but looser crossing point.
-- **The four `*_grad` / `*_step` thresholds plus `energy_gap` together define
+- **`meci(...)` is the driver**, and it is what turns this into a crossing-point
+  optimization rather than an ordinary geometry optimization or single point. The
+  same native optimizer also backs `opt`, `ts`, `neb`, `irc`, and `mecp`; naming
+  `meci` selects the crossing-seam search.
+- **`S0,S1` name the two states to bring together — physically.** You write the
+  states you mean; the format maps them to the internal MRSF roots. To find an
+  S₀/S₂ funnel, write `meci(S0,S2,algorithm=penalty)` — the default BaekA
+  algorithm requires two *consecutive* roots in one spin manifold and says so
+  rather than quietly optimizing the wrong pair. For a spin-different crossing,
+  name states of different spin (`mecp(S0,T1)`) and use the `mecp` driver.
+- **`mrsf(nstate=5)/bhhlyp/6-31g*`** is the same MRSF recipe used everywhere else:
+  the triplet ROHF reference and the spin-flip to a balanced singlet/triplet
+  manifold, all carried by the one `mrsf` token. `nstate` must be large enough to
+  contain both states of interest — `nstate=5` comfortably covers S0 and S1.
+- **`algorithm=penalty`** picks the penalty-function method described above.
+  `sigma` is its starting strength and `pen_incre` the per-cycle ramp factor;
+  `gap` is the energy gap (Hartree) below which the two states count as
+  degenerate. Loosening `gap` gives a quicker but looser crossing point. The
+  crossing drivers use short public names for these — `algorithm`, `sigma`,
+  `alpha`, `gap` — rather than the legacy `meci_search`/`pen_sigma`/`energy_gap`
+  spellings.
+- **The four `*_grad` / `*_step` thresholds plus `gap` together define
   convergence:** the optimizer stops when the geometry is stationary *and* the gap
   is closed. `maxit` caps the cycles.
-- **`[oqp]`** configures the native optimizer engine itself: `coordsys=auto` lets
-  it choose internal vs. Cartesian coordinates, and `trust=0.15` sets the step-size
-  trust radius.
+- **`coordsys=auto` and `trust=0.15`** configure the native optimizer engine
+  itself: whether to work in internal or Cartesian coordinates, and the step-size
+  trust radius. In the concise format these are options of the driver, not a
+  separate engine section.
+- **`scf(maxit=30)` / `tdhf(maxit=30)`** are exact section calls, raising the
+  iteration caps of the reference and the response solver.
 
 ## Python style
 
@@ -169,7 +152,7 @@ results = mol.get_results()
 print("MRSF state energies at the optimized geometry:", results["td_energies"])
 ```
 
-Every argument maps one-to-one to a keyword in the `.inp` deck, so the two scripts
+Every argument maps one-to-one to a keyword in the `.oqp` deck, so the two scripts
 run the *same* optimization and land on the same MECI geometry.
 
 ## Run it
@@ -178,7 +161,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd conical-intersections/inputs
-openqp c2h4_mrsf_meci.inp
+openqp c2h4_mrsf_meci.oqp
 ```
 
 Python style:
@@ -193,10 +176,10 @@ Both need OpenQP installed (`pip install openqp`) and produce the same result.
 ## Reading the output
 
 The optimization prints one line per cycle; the numbers to watch are the
-**energies of states `istate` and `jstate` and the gap between them**, alongside the
-gradient/step norms. The run has succeeded when, on the final cycle:
+**energies of the two states named in the driver and the gap between them**,
+alongside the gradient/step norms. The run has succeeded when, on the final cycle:
 
-- the **S₀-S₁ energy gap** has dropped below `energy_gap` (2e-3 Ha ≈ 0.05 eV) — the
+- the **S₀-S₁ energy gap** has dropped below `gap` (2e-3 Ha ≈ 0.05 eV) — the
   two states are degenerate, and
 - the **gradient and step** norms are below their `*_grad` / `*_step` thresholds —
   the geometry is stationary on the seam.
@@ -208,20 +191,21 @@ That converged geometry *is* the MECI: the twisted-pyramidal ethylene funnel.
   geometry and the two (now nearly equal) state energies.
 - From **Python**, `mol.get_results()["td_energies"]` returns the MRSF state energies
   at the optimized geometry — the tutorial script prints exactly this. The first two
-  entries (S₀ and S₁) should agree to within `energy_gap`, confirming the crossing.
+  entries (S₀ and S₁) should agree to within `gap`, confirming the crossing.
   `mol.get_scf_energy()` gives the underlying ROHF reference energy if you need it.
 
-To explore further: raise `jstate` to hunt a higher crossing (S₀/S₂), loosen or
-tighten `energy_gap` to trade speed for how closed the seam must be, or start from a
-different guess geometry to locate a different funnel on the same seam.
+To explore further: name a higher pair to hunt a higher crossing
+(`meci(S0,S2,algorithm=penalty)`), loosen or tighten `gap` to trade speed for how
+closed the seam must be, or start from a different guess geometry to locate a
+different funnel on the same seam.
 
 ## Manual
 
 - Geometry-optimization / crossing-point workflow (MECI/MECP, `istate`/`jstate`,
   the native `lib=oqp` optimizer):
   <https://open-quantum-platform.github.io/openqp-docs/workflows/optimization/>
-- `[optimize]` keyword reference (`meci_search`, `pen_sigma`, `pen_incre`,
-  `energy_gap`, the convergence thresholds):
+- `[optimize]` keyword reference — the legacy names behind the driver's
+  `algorithm` / `sigma` / `pen_incre` / `gap` and the convergence thresholds:
   <https://open-quantum-platform.github.io/openqp-docs/keywords/optimize/>
 - `[oqp]` keyword reference (`coordsys`, `trust` — configuring the native optimizer):
   <https://open-quantum-platform.github.io/openqp-docs/keywords/oqp/>

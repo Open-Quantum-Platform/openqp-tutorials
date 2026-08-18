@@ -1,7 +1,9 @@
 """Transition-state search for HCN -> HNC isomerization via geomeTRIC.
 
-Equivalent to inputs/hcn_ts.inp: a ground-state (method=hf) TS optimization on
-the geomeTRIC backend. runtype=ts is selected by job.workflow.ts(...).
+Companion to inputs/hcn_ts.oqp: a ground-state TS optimization, here on the
+geomeTRIC backend (the deck uses the native optimizer).  NOTE: this script uses a
+pure Hartree-Fock reference, while the deck carries the bhhlyp functional and is
+therefore BHHLYP Kohn-Sham.
 """
 
 from oqp.openqp import OpenQP

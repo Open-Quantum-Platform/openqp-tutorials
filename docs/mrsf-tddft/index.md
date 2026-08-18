@@ -24,66 +24,52 @@ determinants** (the M_s = +1 and M_s = -1 components of the triplet), which canc
 that contamination and yields balanced, well-defined singlet and triplet states —
 precisely what you need when two states are about to cross.
 
-Practically, three ingredients always travel together: a **triplet reference**
-(`[scf] multiplicity=3 type=rohf`), the **spin-flip response** (`[tdhf]
-type=mrsf`), and a **half-and-half functional** such as BHHLYP, which is the
-standard, well-benchmarked choice for MRSF. State 1 of the returned manifold is the
-S0-like root; the physically excited states are state 2 (S1), state 3 (S2), and so
-on. For the full derivation and benchmarks, see the
+Practically, three ingredients always travel together: a **triplet ROHF
+reference**, the **spin-flip response** built on it, and a **half-and-half
+functional** such as BHHLYP, which is the standard, well-benchmarked choice for
+MRSF. In a `.oqp` deck the first two are carried by the single token `mrsf`, and
+the third is the functional component of the route. The manifold that comes back
+starts with the S0-like state, so you refer to the states simply as `S0`, `S1`,
+`S2`. For the full derivation and benchmarks, see the
 [OpenQP manual](https://open-quantum-platform.github.io/openqp-docs/).
 
 ## Input-file style
 
-The runnable deck is [`inputs/h2o_mrsf.inp`](inputs/h2o_mrsf.inp) — water in the
+The runnable deck is [`inputs/h2o_mrsf.oqp`](inputs/h2o_mrsf.oqp) — water in the
 6-31G\* basis, BHHLYP functional, three MRSF roots, plus the analytic gradient of
 S1. Annotated:
 
-```ini
-[input]
-system=
-   8   0.000000000   0.000000000  -0.041061554   # O   (Angstrom)
-   1  -0.533194329   0.533194329  -0.614469223   # H
-   1   0.533194329  -0.533194329  -0.614469223   # H
-charge=0
-runtype=grad          # energy + gradient (use runtype=energy for energies only)
-basis=6-31g*
-functional=bhhlyp     # half-and-half functional standard for MRSF
-method=tdhf           # activates the [tdhf] response section
-
-[guess]
-type=huckel           # extended-Huckel initial-orbital guess for the SCF
-
-[scf]
-multiplicity=3        # HIGH-SPIN (triplet) reference: MRSF spin-flips from here
-type=rohf             # MRSF requires an ROHF reference
-
-[tdhf]
-type=mrsf             # mixed-reference spin-flip TDDFT
-nstate=3              # solve 3 MRSF roots: S0, S1, S2
-
-[properties]
-grad=2                # analytic gradient of state 2 (S1); state 1 is the S0-like root
+```text
+mrsf(nstate=3)/bhhlyp/6-31g*     # model(options)/functional/basis
+grad(S1)                         # energy + analytic gradient of S1
+guess(type=huckel)               # extended-Huckel initial orbitals
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""
 ```
 
-Key points, section by section:
+Key points, line by line:
 
-- **`[input]`** carries the molecule and the run type. `method=tdhf` is what turns
-  on the `[tdhf]` response section (the response machinery is shared with regular
-  TDHF/TDDFT; `type=mrsf` inside `[tdhf]` selects the MRSF variant). `runtype=grad`
-  asks for energies **and** a gradient; drop it to `runtype=energy` if you only need
-  the excitation energies. `functional=bhhlyp` is the half-and-half functional that
-  MRSF is normally run with.
-- **`[guess]`** just seeds the SCF. `type=huckel` is a cheap extended-Huckel guess
-  for the initial orbitals.
-- **`[scf]`** defines the **reference** MRSF flips out of — not a state you report.
-  `multiplicity=3` makes it a **triplet**, and `type=rohf` makes it
-  restricted-open-shell. Both are required for MRSF.
-- **`[tdhf]`** is the MRSF response calculation. `type=mrsf` selects
-  mixed-reference spin-flip; `nstate=3` solves for three roots. Because state 1 is
-  the S0-like root, `nstate=3` gives you S0, S1, and S2.
-- **`[properties]`** requests the gradient. `grad=2` is the analytic gradient of
-  **state 2**, i.e. S1 (the first genuinely excited state). To optimize a different
-  state, point `grad` at its 1-based root index (e.g. `grad=3` for S2).
+- **`mrsf(nstate=3)/bhhlyp/6-31g*`** is the whole electronic model. `mrsf` carries
+  the high-spin **triplet ROHF reference** that MRSF spin-flips out of — you do not
+  restate it, and you cannot accidentally pair MRSF with the wrong reference.
+  `nstate=3` solves three roots; because the S0-like root is one of them, that
+  gives S0, S1, and S2. `bhhlyp` is the half-and-half functional MRSF is normally
+  run with; drop that component (`mrsf-tdhf/6-31g*`) for MRSF-TDHF.
+- **`grad(S1)`** is the *driver*: energy **and** the analytic gradient, of the
+  state named **physically**. You never work out that S1 is internal response root
+  2 — that mapping is the format's job. Use `energy(S0)` for energies only, or
+  `opt(S1)` to optimize the S1 minimum.
+- **`guess(type=huckel)`** is an exact section call into the legacy `[guess]`
+  section — the escape hatch for anything the concise surface does not name.
+- **`geom`** holds the molecule inline; `geom="water.xyz"` reads it from a file
+  instead.
+
+Everything else — `method=tdhf`, `[tdhf] type=mrsf`, `[scf] type=rohf`,
+`[scf] multiplicity=3`, `[properties] grad=2` — is implied by the two lines above
+and is filled in for you.
 
 ## Python style
 
@@ -137,7 +123,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd mrsf-tddft/inputs
-openqp h2o_mrsf.inp
+openqp h2o_mrsf.oqp
 ```
 
 Python style:
@@ -167,10 +153,10 @@ An MRSF gradient run reports three things: the **reference (ROHF) energy**, the
     Hartree/Bohr, as one (x, y, z) triple per atom. This is the force you would feed
     to a geometry optimizer to relax the S1 surface.
 
-To get *more* states, raise `[tdhf] nstate` (or `nstate=` in
-`job.theory.mrsf(...)`). To take the gradient of a different root, change
-`[properties] grad` (or `job.workflow.gradient(state=...)`) to that root's 1-based
-index. For energies only, drop `runtype` to `energy` / omit the
+To get *more* states, raise `nstate` in the route — `mrsf(nstate=5)/...` — or in
+`job.theory.mrsf(...)`. To take the gradient of a different state, name it in the
+driver: `grad(S2)`, or `job.workflow.gradient(state=...)` with that root's 1-based
+index. For energies only, use `energy(S0)` / omit the
 `job.workflow.gradient(...)` call.
 
 ## Manual

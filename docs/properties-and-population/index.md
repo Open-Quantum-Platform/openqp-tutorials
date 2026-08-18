@@ -40,51 +40,44 @@ definitions and the population-analysis background, see the
 
 ## Input-file style
 
-The runnable deck is [`inputs/h2o_properties.inp`](inputs/h2o_properties.inp) —
+The runnable deck is [`inputs/h2o_properties.oqp`](inputs/h2o_properties.oqp) —
 water in the 6-31G\* basis, a closed-shell RHF reference, with all four property
 analyses switched on. Annotated:
 
-```ini
-[input]
-system=
-   8   0.000000000   0.000000000  -0.041061554   # O   (Angstrom)
-   1  -0.533194329   0.533194329  -0.614469223   # H
-   1   0.533194329  -0.533194329  -0.614469223   # H
-charge=0
-runtype=energy          # single-point; properties ride on top of the energy
-basis=6-31g*
-method=hf               # Hartree-Fock reference (no functional -> pure HF)
-
-[guess]
-type=huckel             # extended-Huckel initial orbital guess
-
-[scf]
-multiplicity=1          # singlet ground state
-type=rhf                # closed-shell restricted HF reference
-
-[properties]
-scf_prop=el_mom,mulliken,lowdin,resp   # the opt-in analyses to run
+```text
+rhf/6-31g*                                            # HF reference (no functional -> pure HF)
+energy()                                              # single-point; properties ride on top
+guess(type=huckel)                                    # extended-Huckel initial orbitals
+properties(scf_prop="el_mom,mulliken,lowdin,resp")    # the opt-in analyses to run
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""
 ```
 
 Key points:
 
-- **`[properties] scf_prop` is the whole tutorial.** It is a comma-separated list;
+- **`properties(scf_prop=...)` is the whole tutorial.** It is an exact call into
+  the legacy `[properties]` section, and `scf_prop` is a comma-separated list:
   each token triggers one analysis after the SCF converges. The accepted values
-  are `el_mom`, `mulliken`, `lowdin`, `resp`, and `nmr` (NMR shielding is covered
-  in its own tutorial). Order does not matter, and you can request any subset.
+  are `el_mom`, `mulliken`, `lowdin`, `resp`, and `nmr` (NMR shielding has its own
+  tutorial, and its own `nmr(...)` shorthand). Order does not matter, and you can
+  request any subset. Quote the list so the commas are not read as separate
+  arguments.
 - **Only what you list is surfaced.** `scf_prop` defaults to empty, so a bare
-  `[input]`/`[scf]` deck prints just the energy. Requesting a property is what
-  makes its numbers appear in the log and in the JSON/Python results — this is
+  `rhf/6-31g*` deck prints just the energy. Requesting a property is what makes
+  its numbers appear in the log and in the JSON/Python results — this is
   deliberate, so the regression-tested output contains exactly the descriptors
   you asked for.
-- **The reference is an ordinary SCF**, chosen in `[scf] type` (`rhf` here). Water
-  is closed-shell so `rhf` is natural; the analyses work the same on a `uhf` or
-  `rohf` reference for open-shell systems — you would just change `type` and
-  `multiplicity`. Because `method=hf` and no `functional` is given, this is pure
-  Hartree-Fock; set a `functional` to run the identical property analysis on a
-  DFT density instead.
-- **`runtype=energy`** — these are ground-state SCF properties evaluated at the
-  input geometry; no gradient is needed.
+- **The reference is an ordinary SCF.** `rhf` suits closed-shell water; the
+  analyses work the same on a `uhf` or `rohf` reference for open-shell systems —
+  you would change the model token and add `mult=`. Because there is no functional
+  component this is pure Hartree-Fock; use `rks/b3lyp5/6-31g*` to run the identical
+  property analysis on a DFT density instead.
+- **`energy()`** is written out here for clarity, but it is also the default: these
+  are ground-state SCF properties evaluated at the input geometry, so no gradient
+  is needed.
 
 ## Python style
 
@@ -139,7 +132,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd properties-and-population/inputs
-openqp h2o_properties.inp
+openqp h2o_properties.oqp
 ```
 
 Python style:

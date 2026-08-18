@@ -1,6 +1,6 @@
 """Analytical HF/DFT Hessian of water: frequencies, normal modes, IR/Raman.
 
-Equivalent to inputs/h2o_hess.inp. Run with:  python h2o_hess.py
+Equivalent to inputs/h2o_hess.oqp. Run with:  python h2o_hess.py
 """
 
 from oqp.openqp import OpenQP

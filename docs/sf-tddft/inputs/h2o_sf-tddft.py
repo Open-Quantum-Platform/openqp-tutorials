@@ -1,6 +1,6 @@
 """Spin-flip TDDFT on H2O with the OpenQP Python API.
 
-Equivalent to inputs/h2o_sf-tddft.inp: a high-spin (triplet) ROHF reference is
+Equivalent to inputs/h2o_sf-tddft.oqp: a high-spin (triplet) ROHF reference is
 spin-flipped down to the singlet manifold with BHHLYP/6-31G*, then the gradient
 of the lowest SF root is computed.
 """

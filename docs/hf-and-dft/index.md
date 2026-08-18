@@ -37,49 +37,55 @@ functionals and references, see the
 
 ## Input-file style
 
-The runnable deck is [`inputs/h2o_rhf_energy.inp`](inputs/h2o_rhf_energy.inp) —
-water in the 6-31G* basis, a closed-shell RHF reference, single-point energy.
-Annotated:
+The runnable deck is [`inputs/h2o_rhf_energy.oqp`](inputs/h2o_rhf_energy.oqp) —
+water in the 6-31G\* basis, a closed-shell RHF reference, single-point energy.
+The whole calculation is four lines:
 
-```ini
-[input]
-system=
-   8   0.000000000   0.000000000  -0.041061554   # O   (Angstrom)
-   1  -0.533194329   0.533194329  -0.614469223   # H
-   1   0.533194329  -0.533194329  -0.614469223   # H
-charge=0
-runtype=energy          # single-point energy (no gradient/optimization)
-basis=6-31g*            # Pople 6-31G* basis
-method=hf               # Hartree-Fock; functional is left empty -> pure HF
-
-[guess]
-type=huckel             # extended-Huckel initial orbital guess
-
-[scf]
-multiplicity=1          # singlet ground state
-type=rhf                # the reference: rhf | rohf | uhf
+```text
+rhf/6-31g*
+guess(type=huckel)
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""
 ```
 
 Key points:
 
-- **`method=hf`** with **no `functional`** requests pure Hartree-Fock. To run
-  **DFT** instead, set a functional and keep `method=hf` — e.g. add
-  `functional=bhhlyp` in `[input]`; a non-empty functional is exactly what turns
-  the SCF into Kohn-Sham DFT.
-- **`runtype=energy`** stops after the converged SCF energy. To get forces,
-  switch to a gradient run by adding a `[properties]` section:
+- **`rhf/6-31g*`** is the *route*: model first, then the basis. `rhf` is pure
+  Hartree-Fock with a restricted closed-shell reference — there is no separate
+  "method" and "reference" to keep in sync. Use `uhf` or `rohf` for the other two
+  references, and add `mult=3` for a triplet.
+- To run **DFT** instead, put a functional between the model and the basis:
+  `rks/bhhlyp/6-31g*`. That third component is exactly what turns the SCF into
+  Kohn-Sham DFT; `uks` and `roks` are the unrestricted and restricted-open-shell
+  Kohn-Sham models.
+- **No driver line means `energy()`** — a single-point energy. To get forces, add
+  a driver line:
 
-  ```ini
-  [properties]
-  grad=0                # ground-state (SCF) gradient
+  ```text
+  grad
   ```
 
-- The **reference is chosen in `[scf]`** via `type`, paired with `multiplicity`.
-  Water is closed-shell, so `type=rhf` / `multiplicity=1` is the natural choice.
-  For an open-shell system pick `rohf` or `uhf` with the matching multiplicity
-  (e.g. `multiplicity=3` for a triplet).
-- **`[guess] type=huckel`** seeds the SCF with cheap extended-Huckel orbitals so
-  the iterations start close to the answer.
+  (`grad(S0)` if you prefer to name the state explicitly; for a ground-state model
+  they mean the same thing.)
+- **`guess(type=huckel)`** is an *exact section call*: it sets `type` in the
+  legacy `[guess]` section, seeding the SCF with cheap extended-Huckel orbitals.
+  Anything the concise surface does not name has this escape hatch — for example
+  `scf(conv=1e-10)` or `scf(stability=true)` for a UHF reference.
+- **`geom`** takes either an inline coordinate block in triple quotes, as here, or
+  a path: `geom="water.xyz"`. Element symbols and atomic numbers are both fine.
+
+The four variants this tutorial discusses, as complete routes:
+
+| Calculation | Route |
+| --- | --- |
+| RHF energy | `rhf/6-31g*` |
+| ROHF triplet energy | `rohf/6-31g*` + `mult=3` |
+| UHF triplet energy | `uhf/6-31g*` + `mult=3` + `scf(stability=true)` |
+| BHHLYP DFT energy | `rks/bhhlyp/6-31g*` |
+| RHF gradient | `rhf/6-31g*` + `grad` |
 
 ## Python style
 
@@ -87,7 +93,7 @@ The equivalent calculation with the OpenQP Python API is
 [`inputs/h2o_rhf_energy.py`](inputs/h2o_rhf_energy.py). `job.theory.hf(...)` sets
 `method=hf` and the `[scf]` reference in one call; `job.theory.dft(...)` does the
 same but fills in the `functional`; and `job.workflow.gradient(...)` replaces the
-energy workflow with a gradient run. The first block reproduces the `.inp`
+energy workflow with a gradient run. The first block reproduces the `.oqp`
 exactly; the rest demonstrate the other references, DFT, and a gradient:
 
 ```python
@@ -99,7 +105,7 @@ H  -0.533194329   0.533194329  -0.614469223
 H   0.533194329  -0.533194329  -0.614469223
 """
 
-# --- RHF/6-31G* energy: the exact equivalent of h2o_rhf_energy.inp ----------
+# --- RHF/6-31G* energy: the exact equivalent of h2o_rhf_energy.oqp ----------
 job = OpenQP("h2o_rhf_energy", silent=1)
 job.molecule(WATER, charge=0, multiplicity=1)
 job.theory.hf(reference="rhf", basis="6-31g*")   # closed-shell HF
@@ -153,7 +159,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd hf-and-dft/inputs
-openqp h2o_rhf_energy.inp
+openqp h2o_rhf_energy.oqp
 ```
 
 Python style (runs the RHF energy plus the ROHF/UHF/DFT/gradient demos):
@@ -163,7 +169,7 @@ cd hf-and-dft/inputs
 python h2o_rhf_energy.py
 ```
 
-Both need OpenQP installed (`pip install openqp`). The `.inp` and the first
+Both need OpenQP installed (`pip install openqp`). The `.oqp` and the first
 Python block produce the same RHF energy.
 
 ## Reading the output

@@ -1,6 +1,6 @@
 """BHHLYP/aug-cc-pVDZ-PP energy of HBr with an ECP on Br (Python API).
 
-Equivalent to hbr_ecp_energy.inp. The "-PP" basis carries an effective core
+Equivalent to hbr_ecp_energy.oqp. The "-PP" basis carries an effective core
 potential for bromine's core electrons; hydrogen keeps an all-electron basis.
 The per-atom basis list is the documented ECP idiom: OpenQP reads the ECP that
 ships with the "-PP" set and builds it through libecpint.

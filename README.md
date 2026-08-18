@@ -2,7 +2,7 @@
 
 Hands-on, runnable tutorials for **[OpenQP](https://github.com/Open-Quantum-Platform/openqp)**
 (Open Quantum Platform). Every tutorial shows the calculation in **both** the
-classic **input-file** style and the compact **Python API**.
+concise **`.oqp` input-file** style and the compact **Python API**.
 
 📖 **Read the tutorials book:** <https://open-quantum-platform.github.io/openqp-tutorials/>
 
@@ -21,9 +21,15 @@ pip install openmm      # optional MM backend (needed for the QM/MM tutorials)
 ## Run a tutorial (either style)
 
 ```bash
-openqp docs/mrsf-tddft/inputs/h2o_mrsf.inp     # input-file style
+openqp docs/mrsf-tddft/inputs/h2o_mrsf.oqp     # input-file style
 python docs/mrsf-tddft/inputs/h2o_mrsf.py      # Python-API style
 ```
+
+The decks are written in OpenQP's concise `.oqp` format: a *route* line naming
+the physical model, a *driver* naming the calculation, and — only where the
+defaults are not what you want — exact section calls such as `scf(conv=1e-10)`.
+The older sectioned `.inp` format is still read by `openqp`; it is documented in
+the [manual](https://open-quantum-platform.github.io/openqp-docs/).
 
 ## Contents
 

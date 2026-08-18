@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Ground-state ESPF QM/MM molecular dynamics of a water dimer (runtype=md).
 
-Python-API counterpart of water_dimer_qmmm_md.inp. The QM water (atoms 0-2) is
+Python-API counterpart of water_dimer_qmmm_md.oqp. The QM water (atoms 0-2) is
 propagated under the embedded QM/ESPF force and the MM water under the force
 field, coupled through ESPF electrostatics, using an OpenMM integrator. This is
 the ground-state QM/MM MD path (the QMMM_MD driver); for excited-state /
@@ -14,8 +14,8 @@ driver directly from the [qmmm] section of the *input file*; they are not part
 of the strict Python-API schema. So this script sets up the QM/MM system with
 job.qmmm(...) and selects runtype=md, and the trajectory length / step / ensemble
 fall back to the driver defaults (n_steps=1000, timestep=1.0 fs, ensemble=nve).
-To pin them to the values in water_dimer_qmmm_md.inp (n_steps=5, timestep=0.5,
-ensemble=nve), run that .inp with the CLI:  openqp water_dimer_qmmm_md.inp
+To pin them to the values in water_dimer_qmmm_md.oqp (n_steps=5, timestep=0.5,
+ensemble=nve), run that .oqp with the CLI:  openqp water_dimer_qmmm_md.oqp
 """
 from oqp.openqp import OpenQP
 

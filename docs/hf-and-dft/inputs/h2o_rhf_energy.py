@@ -1,6 +1,6 @@
 """HF and DFT energies and gradients on water via the OpenQP Python API.
 
-The first block reproduces inputs/h2o_rhf_energy.inp exactly (RHF/6-31G*
+The first block reproduces inputs/h2o_rhf_energy.oqp exactly (RHF/6-31G*
 single-point energy). The remaining blocks show the ROHF/UHF references, the
 DFT (Kohn-Sham) helper, and how to ask for a gradient instead of an energy.
 Run with:  python h2o_rhf_energy.py
@@ -8,14 +8,14 @@ Run with:  python h2o_rhf_energy.py
 
 from oqp.openqp import OpenQP
 
-# Same water geometry (Angstrom) used by the .inp files.
+# Same water geometry (Angstrom) used by the .oqp deck.
 WATER = """
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223
 H   0.533194329  -0.533194329  -0.614469223
 """
 
-# --- RHF/6-31G* energy: the exact equivalent of h2o_rhf_energy.inp ----------
+# --- RHF/6-31G* energy: the exact equivalent of h2o_rhf_energy.oqp ----------
 job = OpenQP("h2o_rhf_energy", silent=1)
 job.molecule(WATER, charge=0, multiplicity=1)
 job.theory.hf(reference="rhf", basis="6-31g*")   # closed-shell HF

@@ -1,14 +1,16 @@
 """Ground-state geometry optimization of water with the native OpenQP optimizer.
 
-Equivalent to inputs/h2o_optimize.inp: RHF/BHHLYP-as-HF (method=hf) with the
-6-31g* basis, optimized on the native `lib=oqp` backend in TRIC coordinates.
+Companion to inputs/h2o_optimize.oqp, which optimizes the same molecule with the
+native `lib=oqp` backend in TRIC coordinates.  NOTE: this script uses a pure
+Hartree-Fock reference, while the deck carries the bhhlyp functional and is
+therefore BHHLYP Kohn-Sham; swap job.theory.hf for job.theory.dft to match it.
 """
 
 from oqp.openqp import OpenQP
 
 job = OpenQP("h2o_optimize", silent=1)
 
-# Same starting geometry as the .inp (Angstrom); charge 0, closed-shell singlet.
+# Same starting geometry as the .oqp (Angstrom); charge 0, closed-shell singlet.
 job.molecule(
     """
 O  -0.0000000000   0.0000000000  -0.0410615540

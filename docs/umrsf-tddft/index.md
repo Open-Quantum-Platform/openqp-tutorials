@@ -32,66 +32,51 @@ and the full method family, see the
 
 ## Input-file style
 
-The runnable deck is [`inputs/c4h6_umrsf_energy.inp`](inputs/c4h6_umrsf_energy.inp) —
+The runnable deck is [`inputs/c4h6_umrsf_energy.oqp`](inputs/c4h6_umrsf_energy.oqp) —
 butadiene in 6-31G\*, a UHF triplet reference, an unrestricted-MRSF response,
 energy only. Annotated:
 
-```ini
-[input]
-system=
- 6   -1.901080641    0.114577198    0.000000000   # C  (Angstrom)
- 6   -0.574900598   -0.402237631    0.000000000   # C
- 6    1.901080641   -0.114577198    0.000000000   # C
- 6    0.574900598    0.402237631    0.000000000   # C
- 1   -2.755248674   -0.545115910    0.000000000   # H
- 1   -2.071562576    1.183086840    0.000000000   # H
- 1    2.755248674    0.545115910    0.000000000   # H
- 1   -0.441348756   -1.477941036    0.000000000   # H
- 1    2.071562576   -1.183086840    0.000000000   # H
- 1    0.441348756    1.477941036    0.000000000   # H
-charge=0
-runtype=energy          # single-point excitation energies only
-method=tdhf             # linear-response (TD) engine; MRSF lives here
-functional=bhhlyp       # half-and-half functional, the usual MRSF choice
-basis=6-31g*
-
-[scf]
-type=uhf                # UHF reference -- this is the "U" in UMRSF
-multiplicity=3          # high-spin (triplet) reference to spin-flip from
-
-[tdhf]
-type=umrsf              # unrestricted mixed-reference spin-flip response
-nstate=5                # solve 5 target roots
-multiplicity=1          # target the SINGLET manifold
+```text
+umrsf(nstate=5)/bhhlyp/6-31g*    # model(roots)/functional/basis
+geom="""
+C   -1.901080641    0.114577198    0.000000000
+C   -0.574900598   -0.402237631    0.000000000
+C    1.901080641   -0.114577198    0.000000000
+C    0.574900598    0.402237631    0.000000000
+H   -2.755248674   -0.545115910    0.000000000
+H   -2.071562576    1.183086840    0.000000000
+H    2.755248674    0.545115910    0.000000000
+H   -0.441348756   -1.477941036    0.000000000
+H    2.071562576   -1.183086840    0.000000000
+H    0.441348756    1.477941036    0.000000000
+"""
 ```
 
-What each key does:
+What each part does:
 
-- **`[input] method=tdhf`** selects the time-dependent (linear-response) engine;
-  the *flavor* of response (plain TDDFT, MRSF, or UMRSF) is chosen in `[tdhf]`.
-- **`[input] runtype=energy`** — this deck is energy-only. `functional=bhhlyp` and
-  `basis=6-31g*` are the standard MRSF functional/basis pairing.
-- **`[scf] type=uhf`** is the defining choice: the reference determinant is
-  **unrestricted**. Swapping this to `type=rohf` (with `[tdhf] type=mrsf`) recovers
-  ordinary MRSF-TDDFT — the geometry, functional, basis, and root count stay the
-  same.
-- **`[scf] multiplicity=3`** puts the reference in the **high-spin (triplet)**
-  state. Spin-flip methods *must* start from high spin; this is the determinant the
-  response flips out of, not a state you interpret.
-- **`[tdhf] type=umrsf`** turns the response into **unrestricted mixed-reference
-  spin-flip**, the partner of the UHF reference.
-- **`[tdhf] nstate=5`** requests five roots.
-- **`[tdhf] multiplicity=1`** tells the solver to return the **singlet** target
-  states (set `multiplicity=3` to collect triplet targets instead).
+- **`umrsf`** is the single token that makes this "U"MRSF. It carries all four of
+  the legacy choices at once: an **unrestricted (UHF)** reference determinant — the
+  "U" — in the **high-spin triplet** state that spin-flip must start from, the
+  **unrestricted mixed-reference spin-flip** response built on it, and the
+  **singlet** target manifold. Changing the one token to `mrsf` recovers ordinary
+  MRSF-TDDFT on an ROHF reference; the geometry, functional, basis, and root count
+  stay exactly as they are.
+- **`nstate=5`** requests five target roots. It is a model option, so it lives in
+  the route parentheses.
+- **`bhhlyp` / `6-31g*`** are the standard MRSF functional/basis pairing. Drop the
+  functional component (`umrsf-tdhf/6-31g*`) for UMRSF-TDHF.
+- **No driver line means `energy()`** — single-point excitation energies. Add
+  `grad(S1)` or `opt(S1)` when you want derivatives.
 
-The four keywords that make this "U"MRSF rather than plain MRSF, at a glance:
+MRSF vs UMRSF, at a glance:
 
-| section | keyword | value |
+| | route | reference the model implies |
 | --- | --- | --- |
-| `[scf]` | `type` | `uhf`  ← the "U" |
-| `[scf]` | `multiplicity` | `3` (triplet reference) |
-| `[tdhf]` | `type` | `umrsf` |
-| `[tdhf]` | `multiplicity` | `1` (singlet targets) |
+| MRSF-TDDFT | `mrsf(nstate=5)/bhhlyp/6-31g*` | ROHF, triplet |
+| UMRSF-TDDFT | `umrsf(nstate=5)/bhhlyp/6-31g*` | UHF, triplet |
+
+To collect **triplet** target states instead of singlets, name a triplet in the
+driver — `energy(T0)` — rather than setting a target multiplicity by hand.
 
 ## Python style
 
@@ -106,7 +91,7 @@ model-specific helpers do not cover.
 ```python
 from oqp.openqp import OpenQP
 
-# Butadiene geometry (Angstrom), same atoms/order as the .inp deck.
+# Butadiene geometry (Angstrom), same atoms/order as the .oqp deck.
 butadiene = """
 6   -1.901080641    0.114577198    0.000000000
 6   -0.574900598   -0.402237631    0.000000000
@@ -155,7 +140,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd umrsf-tddft/inputs
-openqp c4h6_umrsf_energy.inp
+openqp c4h6_umrsf_energy.oqp
 ```
 
 Python style:

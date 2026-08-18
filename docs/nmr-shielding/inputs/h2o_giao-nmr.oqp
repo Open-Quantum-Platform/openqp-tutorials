@@ -1,0 +1,11 @@
+# RHF/STO-3G GIAO (London-orbital) NMR nuclear magnetic shielding of H2O.
+# Gauge-including atomic orbitals make the shielding gauge-origin independent.
+# The nmr(...) modifier adds the shielding property to the energy run.
+rhf/sto-3g
+nmr(gauge=giao)
+guess(type=huckel)
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""

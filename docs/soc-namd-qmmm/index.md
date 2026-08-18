@@ -118,116 +118,109 @@ If OpenMM is missing, QM/MM decks are reported **SKIPPED** rather than run.
 
 ---
 
-## 4. The input, section by section
+## 4. The input, line by line
 
-Open [`inputs/h2co-water_soc-namd-qmmm.inp`](inputs/h2co-water_soc-namd-qmmm.inp).
-It has six sections. Here is what each one is doing.
+Open [`inputs/h2co-water_soc-namd-qmmm.oqp`](inputs/h2co-water_soc-namd-qmmm.oqp).
+It is four lines plus a geometry. Here is what each one is doing.
 
-### `[input]` — the QM subsystem and the run type
+### The route — the QM electronic model
 
-```ini
-system=
-   6   0.000000   0.000000   0.000000     # C
-   8   0.000000   0.000000   1.203000     # O
-   1   0.000000   0.943000  -0.589000     # H
-   1   0.000000  -0.943000  -0.589000     # H
-charge=0
-runtype=namd            # nonadiabatic dynamics
-basis=6-31g*
-functional=bhhlyp
-method=tdhf
-qmmm_flag=True
+```text
+mrsf(nstate=2)/bhhlyp/6-31g*
 ```
 
-`system` is the **QM geometry**, in the same order as `qmmm_flag`'s selection.
-`runtype=namd` picks surface-hopping dynamics; `qmmm_flag=True` says "embed this
-in an MM environment (configured in `[qmmm]`)". `bhhlyp` is a common half-and-half
+`mrsf` is MRSF-TDDFT, and it carries its own reference: a **triplet ROHF**
+determinant. That reference is not the state you care about — it is the
+mathematical starting point that MRSF spin-flips from to reach the balanced
+singlet/triplet manifold — and because the model implies it, there is no way to
+pair MRSF with a reference that cannot support it.
+
+`nstate=2` requests two singlet roots (S₀, S₁). With `soc=true` in the driver the
+code also forms the triplets and their sublevels automatically, giving the
+spin-adiabatic manifold described in §1. `bhhlyp` is a common half-and-half
 functional for MRSF.
 
-### `[scf]` — the high-spin reference
+### The geometry — QM subsystem and MM environment in one line
 
-```ini
-multiplicity=3
-type=rohf
+```text
+geom="formaldehyde_water.pdb 0-3"
 ```
 
-MRSF-TDDFT is built *on top of* a **triplet ROHF** reference. This is not the
-state you care about — it is the mathematical starting point that MRSF spin-flips
-from to reach the balanced singlet/triplet manifold.
+The PDB holds *all* atoms (QM + MM); the trailing `0-3` carves out the **QM
+region** by 0-based PDB index. Everything else is MM. One line therefore fixes
+both the QM geometry and the QM/MM partition — the legacy deck spelled the same
+thing three times (an inline `system` block, `[qmmm] pdb_file`, and
+`[qmmm] qm_atoms`), which is three chances for them to disagree.
 
-### `[tdhf]` — the MRSF excited states
-
-```ini
-type=mrsf
-nstate=2                # solve 2 MRSF singlet roots
-multiplicity=3          # reference multiplicity (matches [scf])
-```
-
-`nstate=2` requests two singlet roots (S₀, S₁). With `soc=True` the code also
-forms the triplets and their sublevels automatically, giving the spin-adiabatic
-manifold described in §1.
-
-### `[properties]`
-
-```ini
-grad=1                  # analytic gradients: needed to move the nuclei
-```
-
-### `[md]` — the dynamics and the hopping
+### `namd(...)` — the dynamics and the hopping
 
 This is the heart of a NAMD run.
 
-```ini
-nstep=1                 # number of nuclear steps
-dt=0.25                 # nuclear time step (fs)
-active=5                # initially populated spin-adiabatic state (0-based)
-substep=50              # electronic sub-steps per nuclear step
-init_temp=300           # sample initial velocities at 300 K (Maxwell)
-velocity=maxwell
-seed=3                  # fixed RNG seed -> reproducible hops
-decoherence=edc         # energy-based decoherence (Granucci-Persico 2007)
-trivial=True            # detect trivial (weakly-avoided) crossings
-soc=True                # spin-orbit coupling ON -> allows ISC
-thrshe=0.1              # gap gate: suppress spurious hops to S0
+```text
+namd(nstep=1,dt=0.25,active=5,substep=50,init_temp=300,velocity=maxwell,
+     seed=3,decoherence=edc,trivial=true,soc=true,thrshe=0.1)
 ```
+
+| option | meaning |
+| --- | --- |
+| `nstep=1` | number of nuclear steps (raise for a real trajectory) |
+| `dt=0.25` | nuclear time step (fs) |
+| `active=5` | initially populated spin-adiabatic state |
+| `substep=50` | electronic sub-steps per nuclear step |
+| `init_temp=300` / `velocity=maxwell` | sample initial velocities at 300 K |
+| `seed=3` | fixed RNG seed → reproducible hops |
+| `decoherence=edc` | energy-based decoherence (Granucci-Persico 2007) |
+| `trivial=true` | detect trivial (weakly-avoided) crossings |
+| `soc=true` | spin-orbit coupling ON → allows ISC |
+| `thrshe=0.1` | gap gate: suppress spurious hops to S₀ |
 
 Key ideas:
 
 - **`active`** is *which* state the trajectory starts on. On the spin-adiabatic
   manifold the states are ordered by energy across singlets and triplet
   sublevels, so `active=5` starts partway up the manifold (a bright singlet,
-  here) rather than the ground state.
+  here) rather than the ground state. Because `active` already names the state
+  completely, the driver takes no separate state label, and the gradient the
+  propagator needs is selected from it each step.
 - **`substep`** matters because the electronic amplitude oscillates much faster
   than the nuclei move; the time-derivative couplings are integrated on this finer
   grid between nuclear steps.
 - **`decoherence=edc`** corrects a well-known FSSH pathology (over-coherence) so
-  populations relax physically. **`trivial=True`** stops the trajectory from
+  populations relax physically. **`trivial=true`** stops the trajectory from
   missing a hop at a very sharp, weakly-avoided crossing.
-- **`soc=True`** is the switch that turns *NAMD* into *SOC-NAMD*: without it you
+- **`soc=true`** is the switch that turns *NAMD* into *SOC-NAMD*: without it you
   get internal conversion only; with it, singlet↔triplet ISC is possible.
 - **`thrshe`** is a safety gate: near the Franck-Condon point the default would
   permit unphysical hops down to S₀; `0.1` Hartree is the recommended value.
 
-### `[qmmm]` — the environment
+### `qmmm(...)` — the environment
 
-```ini
-pdb_file=formaldehyde_water.pdb          # full QM+MM system
-forcefield_files=formaldehyde.xml tip3p.xml
-qm_atoms=0-3                             # 0-based PDB indices that are QM
-cutoff=NoCutoff                          # isolated cluster
-embedding=electrostatic                  # full ESPF embedding
+```text
+qmmm(forcefield_files="formaldehyde.xml tip3p.xml",cutoff=NoCutoff,
+     embedding=electrostatic)
 ```
 
-`pdb_file` holds *all* atoms (QM + MM); `qm_atoms` carves out the QM region;
-everything else is MM, parameterized by the `forcefield_files`. `formaldehyde.xml`
-only needs to supply the QM atoms' Lennard-Jones parameters — their electrostatics
-come from ESPF, not from fixed MM charges. `cutoff=NoCutoff` is for an isolated
-cluster; for a **solvated periodic box** you would use `cutoff=PME`, which turns
-on the particle-mesh-Ewald branch of the embedding.
+Supplying `qmmm(...)` is itself what turns QM/MM on; the PDB named in `geom` is
+propagated into the section for you. The MM atoms are parameterized by the
+`forcefield_files`. `formaldehyde.xml` only needs to supply the QM atoms'
+Lennard-Jones parameters — their electrostatics come from ESPF, not from fixed MM
+charges. `cutoff=NoCutoff` is for an isolated cluster; for a **solvated periodic
+box** you would use `cutoff=PME`, which turns on the particle-mesh-Ewald branch of
+the embedding. `embedding=electrostatic` selects full ESPF coupling.
+
+### `guess(...)` — starting orbitals
+
+```text
+guess(type=huckel)
+```
+
+An exact call into the legacy `[guess]` section, seeding the ROHF with cheap
+extended-Huckel orbitals. This is the escape hatch the format keeps for every
+control it does not name directly.
 
 > The QM region here is a *whole molecule*. Cutting a covalent bond (carving a
 > fragment out of a larger molecule) is a **covalent boundary** — supported by the
-> single-point and ground-state QM/MM paths, but not by `runtype=namd`. See the
+> single-point and ground-state QM/MM paths, but not by `namd(...)`. See the
 > [covalent-boundary docs](https://open-quantum-platform.github.io/openqp-docs/keywords/qmmm/#covalent-qmmm-boundaries).
 
 ---
@@ -276,7 +269,7 @@ From the `inputs/` folder (so the PDB/force-field files resolve), either style:
 
 ```bash
 cd soc-namd-qmmm/inputs
-openqp h2co-water_soc-namd-qmmm.inp     # input-file style
+openqp h2co-water_soc-namd-qmmm.oqp     # input-file style
 python h2co-water_soc-namd-qmmm.py      # Python-API style
 ```
 

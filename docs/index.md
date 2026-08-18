@@ -2,7 +2,7 @@
 
 Hands-on, runnable tutorials for **[OpenQP](https://github.com/Open-Quantum-Platform/openqp)**
 (Open Quantum Platform) — the MRSF-TDDFT quantum-chemistry package. Every tutorial
-shows the calculation in **both styles**: the classic **input-file** deck and the
+shows the calculation in **both styles**: the concise **`.oqp` input deck** and the
 compact **Python API**.
 
 Where the pieces fit:
@@ -25,7 +25,7 @@ pip install openmm      # optional MM backend (needed for the QM/MM tutorials)
 
 ## How to use
 
-Each tutorial page walks through the physics, an **annotated input deck**, the
+Each tutorial page walks through the physics, an **annotated `.oqp` deck**, the
 **equivalent Python script**, how to run both, and how to read the output. The
 runnable files live next to each tutorial in its `inputs/` folder. Every deck
 uses a small, fast system (water, ethylene, formaldehyde) so you can iterate in
@@ -34,9 +34,34 @@ seconds.
 Run a tutorial either way:
 
 ```bash
-openqp <tutorial>/inputs/<deck>.inp     # input-file style
+openqp <tutorial>/inputs/<deck>.oqp     # input-file style
 python <tutorial>/inputs/<deck>.py      # Python-API style
 ```
+
+## The `.oqp` input format
+
+Every deck in this book is written in OpenQP's concise `.oqp` format. A deck is
+built from four kinds of line:
+
+| Line | Example | What it does |
+| --- | --- | --- |
+| **route** (always first) | `mrsf(nstate=3)/bhhlyp/6-31g*` | names the physical model, the functional, and the basis. Model options go in parentheses. |
+| **driver** (at most one) | `grad(S1)` | names the calculation and its target state. `energy()` is the default. |
+| **options / section calls** | `charge=1`, `scf(conv=1e-10)` | top-level physical settings, plus exact legacy-section calls for anything the defaults do not cover. |
+| **geometry** | `geom="h2o.xyz"` or an inline `geom` block | the molecule: an `.xyz`/`.pdb` path, or coordinates in triple quotes. |
+
+Two things the format does deliberately:
+
+- **States are physical.** You write `grad(S1)` or `meci(S0,S1)`; you never work
+  out which internal response root that is. (Spin-flip roots are not spin-adapted
+  before diagonalization, so SF decks use `root=N` instead.)
+- **References are implied by the model.** `mrsf` means a high-spin triplet ROHF
+  reference, `umrsf` a UHF one; you do not restate them.
+
+Anything the concise surface does not name is still reachable through an exact
+section call — `tdhf(nvdav=30)`, `dftgrid(rad_npts=96,ang_npts=302)` — so no
+keyword is lost. The older sectioned `.inp` format is still read by `openqp`;
+see the [manual](https://open-quantum-platform.github.io/openqp-docs/) for it.
 
 ## The tutorials
 

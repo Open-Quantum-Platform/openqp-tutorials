@@ -1,6 +1,6 @@
 """Water RHF energy in a ddPCM dielectric continuum (energy-only PCM/ddX).
 
-Python-API equivalent of h2o_pcm_ddpcm.inp. Run with:  python h2o_pcm_ddpcm.py
+Python-API equivalent of h2o_pcm_ddpcm.oqp. Run with:  python h2o_pcm_ddpcm.py
 """
 
 from oqp.openqp import OpenQP

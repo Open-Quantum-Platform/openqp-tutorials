@@ -1,9 +1,7 @@
 """Transition-state search for HCN -> HNC isomerization via geomeTRIC.
 
-Companion to inputs/hcn_ts.oqp: a ground-state TS optimization, here on the
-geomeTRIC backend (the deck uses the native optimizer).  NOTE: this script uses a
-pure Hartree-Fock reference, while the deck carries the bhhlyp functional and is
-therefore BHHLYP Kohn-Sham.
+Companion to inputs/hcn_ts.oqp: a BHHLYP/3-21G ground-state TS search, here on
+the geomeTRIC backend (the .oqp deck uses the native optimizer).
 """
 
 from oqp.openqp import OpenQP
@@ -21,8 +19,9 @@ H  -1.1000000000   0.0000000000   0.0000000000
     multiplicity=1,
 )
 
-# Hartree-Fock reference with a small 3-21g basis (fast).
-job.theory.hf(basis="3-21g")
+# BHHLYP Kohn-Sham reference with a small 3-21g basis (fast), matching the
+# .oqp deck's "rks/bhhlyp/3-21g" route.
+job.theory.dft(functional="bhhlyp", basis="3-21g", reference="rhf")
 
 # Workflow: transition-state search (runtype=ts) on the geomeTRIC backend.
 #   lib="geometric"           -> [optimize] lib=geometric

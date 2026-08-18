@@ -112,7 +112,7 @@ What changes relative to the water minimization:
 ## Python style
 
 Each deck has a one-to-one Python twin using the compact `OpenQP` scripting
-interface. `job.theory.hf(...)` sets the reference, and `job.workflow.optimize(...)`
+interface. `job.theory.dft(...)` sets the reference, and `job.workflow.optimize(...)`
 / `job.workflow.ts(...)` fill the `[optimize]` section and route the extra
 keywords to the right backend section automatically.
 
@@ -134,8 +134,8 @@ H   0.5331943294  -0.5331943294  -0.6144692230
     multiplicity=1,
 )
 
-# Hartree-Fock reference (method=hf) with the 6-31g* basis.
-job.theory.hf(basis="6-31g*")
+# BHHLYP Kohn-Sham reference with the 6-31g* basis, matching the deck's route.
+job.theory.dft(functional="bhhlyp", basis="6-31g*", reference="rhf")
 
 # Geometry optimization on the native optimizer.
 #   lib="oqp"      -> [optimize] lib=oqp   (native backend)
@@ -184,8 +184,8 @@ H  -1.1000000000   0.0000000000   0.0000000000
     multiplicity=1,
 )
 
-# Hartree-Fock reference with a small 3-21g basis (fast).
-job.theory.hf(basis="3-21g")
+# BHHLYP Kohn-Sham reference with a small 3-21g basis (fast).
+job.theory.dft(functional="bhhlyp", basis="3-21g", reference="rhf")
 
 # Transition-state search (runtype=ts) on the geomeTRIC backend.
 #   lib="geometric"          -> [optimize] lib=geometric
@@ -212,14 +212,7 @@ print(mol.get_results())
 
 ## Run it
 
-Run from the `inputs/` folder.
-
-> **Note.** The Python twins on this page are *not* numerically identical to the
-> decks: they call `job.theory.hf(...)`, i.e. pure Hartree-Fock, while the decks
-> carry the `bhhlyp` functional and are therefore BHHLYP Kohn-Sham. Both find the
-> same stationary points, but at different levels of theory. Use
-> `job.theory.dft(functional="bhhlyp", ...)` in the scripts to match the decks
-> exactly.
+Both styles produce the same result; run from the `inputs/` folder.
 
 Water minimization:
 
@@ -238,7 +231,7 @@ python hcn_ts.py              # Python-API style
 ```
 
 Both need OpenQP installed (`pip install openqp`). The `.oqp` decks run entirely
-on the native optimizer; the TS *Python* script below selects the external
+on the native optimizer; the TS *Python* script above selects the external
 **geomeTRIC** backend, which needs `pip install geometric`.
 
 ## Reading the output

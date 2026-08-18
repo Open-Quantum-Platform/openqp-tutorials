@@ -1,0 +1,20 @@
+# UMRSF-TDDFT single-point excitation energies of butadiene (C4H6).
+# BHHLYP / 6-31G* -- energy only.
+#
+# The single token "umrsf" carries what took four legacy keywords: a UHF
+# (the "U") high-spin triplet reference, the unrestricted MRSF response, and
+# the singlet target manifold.  Plain MRSF ("mrsf") differs only in using an
+# ROHF reference; everything else is identical.
+umrsf(nstate=5)/bhhlyp/6-31g*
+geom="""
+C   -1.901080641    0.114577198    0.000000000
+C   -0.574900598   -0.402237631    0.000000000
+C    1.901080641   -0.114577198    0.000000000
+C    0.574900598    0.402237631    0.000000000
+H   -2.755248674   -0.545115910    0.000000000
+H   -2.071562576    1.183086840    0.000000000
+H    2.755248674    0.545115910    0.000000000
+H   -0.441348756   -1.477941036    0.000000000
+H    2.071562576   -1.183086840    0.000000000
+H    0.441348756    1.477941036    0.000000000
+"""

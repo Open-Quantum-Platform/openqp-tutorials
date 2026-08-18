@@ -1,0 +1,12 @@
+# PBE/6-31G energy of water driven to convergence with the second-order SCF.
+# converger_type is an [scf] control, so it is written as an exact scf(...) call.
+rks/pbe/6-31g
+d4=false
+guess(type=huckel,save_mol=true)
+scf(converger_type=soscf,maxit=60,conv=1e-6)
+dftgrid(rad_npts=96,ang_npts=302,pruned="")
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""

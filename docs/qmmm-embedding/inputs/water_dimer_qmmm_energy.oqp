@@ -1,0 +1,13 @@
+# ESPF QM/MM single-point energy.
+#
+# System: a water dimer (water_dimer.pdb).  QM region = the FIRST water
+# (PDB atoms 0,1,2); the SECOND water is MM (TIP3P point charges).  The MM
+# charges polarize the QM density through the ESPF operator.  Requires the
+# optional OpenMM backend (pip install openmm).
+#
+# The geometry is the PDB plus the 0-based QM atom selection; qmmm(...) both
+# turns QM/MM on and carries the MM settings.
+rks/bhhlyp/6-31g*
+geom="water_dimer.pdb 0 1 2"
+energy()
+qmmm(forcefield_files=tip3p.xml,cutoff=NoCutoff,embedding=electrostatic)

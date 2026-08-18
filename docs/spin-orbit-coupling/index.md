@@ -35,54 +35,45 @@ derivation and the operator definitions, see the
 
 ## Input-file style
 
-The runnable deck is [`inputs/h2o_soc.inp`](inputs/h2o_soc.inp) — water in the
+The runnable deck is [`inputs/h2o_soc.oqp`](inputs/h2o_soc.oqp) — water in the
 6-31G(2df,p) basis, a triplet-ROHF MRSF reference, SOC over the singlet/triplet
 manifold. Annotated:
 
-```ini
-[input]
-system=
- 8     0.000000000000   0.000000000000   0.000000000000   # O (Angstrom)
- 1     0.772597940000   0.555677850000   0.000000000000   # H
- 1    -0.773127700000   0.555677850000   0.000000000000   # H
-charge=0
-runtype=soc            # spin-orbit-coupling workflow
-method=tdhf            # response (TD) engine; MRSF lives under this method
-functional=bhhlyp      # half-and-half functional recommended for MRSF
-basis=6-31G(2df,p)
-soc_2e=1               # 1e Breit-Pauli + mean-field 2e SOC (0 = 1e only)
-ispher=false           # Cartesian AOs: 2e SOC is not available with spherical AOs
-
-[scf]
-type=rohf              # MRSF is built on a high-spin ROHF reference
-multiplicity=3         # triplet reference (the spin-flip starting point)
-scal_rel=2             # DKH scalar-relativistic core (1st + 2nd order)
-converger_type=diis    # DIIS SCF accelerator
-maxit=200              # max SCF iterations
-
-[tdhf]
-type=mrsf              # MRSF-TDDFT response
-nstate=12              # response roots; SOC forms the S and T roots internally
+```text
+mrsf(nstate=12)/bhhlyp/6-31g(2df,p)          # 12 MRSF response roots
+ispher=false                                 # Cartesian AOs: required by 2e SOC
+soc(soc_2e=1)                                # 1e Breit-Pauli + mean-field 2e SOC
+scf(scal_rel=2,converger_type=diis,maxit=200)
+geom="""
+O    0.000000000000   0.000000000000   0.000000000000
+H    0.772597940000   0.555677850000   0.000000000000
+H   -0.773127700000   0.555677850000   0.000000000000
+"""
 ```
 
 Key points:
 
-- **`runtype=soc`** selects the spin-orbit-coupling workflow: converge the
-  reference, solve the MRSF roots, build the SOC matrix, and diagonalize.
-- **`method=tdhf` + `[tdhf] type=mrsf`** is the MRSF-TDDFT response engine. The
-  `[scf]` block sets its reference — **`type=rohf` with `multiplicity=3`** is the
-  triplet ROHF that MRSF spin-flips from. This is not a state you care about; it
-  is the mathematical starting point that produces balanced singlets and
-  triplets.
+- **`soc(...)` is the driver.** It selects the spin-orbit-coupling workflow:
+  converge the reference, solve the MRSF roots, build the SOC matrix, and
+  diagonalize.
+- **`mrsf(nstate=12)/bhhlyp/6-31g(2df,p)`** is the response model. `mrsf` carries
+  the high-spin triplet ROHF reference MRSF spin-flips from — not a state you care
+  about, but the mathematical starting point that produces balanced singlets and
+  triplets. `nstate=12` requests twelve response roots; from these the SOC workflow
+  forms the singlet and triplet states internally and couples them, so you do not
+  enumerate the spin blocks yourself.
 - **`soc_2e=1`** turns on the mean-field two-electron SOC on top of the
   one-electron Breit-Pauli term. Because that path is built over Cartesian
   Gaussians, it **requires `ispher=false`**; set `soc_2e=0` if you only want the
-  one-electron term.
-- **`scal_rel=2`** applies the second-order DKH scalar-relativistic correction
-  to the core. `scal_rel=1` is first-order only; `0` turns it off.
-- **`nstate=12`** requests twelve MRSF response roots. From these the SOC
-  workflow forms the singlet and triplet states internally and couples them — you
-  do not enumerate the spin blocks yourself.
+  one-electron term. To size the singlet and triplet blocks independently, drop
+  `nstate` from the route and give `soc(ns=...,nt=...)` instead — asking for both
+  at once is rejected rather than silently resolved.
+- **`scf(scal_rel=2)`** applies the second-order DKH scalar-relativistic correction
+  to the core (`scal_rel=1` is first-order only; `0` turns it off), alongside the
+  DIIS accelerator and a raised iteration cap. These are `[scf]` controls, so they
+  travel in an exact section call rather than the route.
+- **A basis name may contain parentheses and commas** — `6-31g(2df,p)` parses as
+  one route component, because the route is split only at top level.
 
 ## Python style
 
@@ -141,7 +132,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd spin-orbit-coupling/inputs
-openqp h2o_soc.inp
+openqp h2o_soc.oqp
 ```
 
 Python style:

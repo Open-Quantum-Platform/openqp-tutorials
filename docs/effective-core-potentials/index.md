@@ -38,51 +38,44 @@ set. For depth, see the [OpenQP manual](https://open-quantum-platform.github.io/
 
 ## Input-file style
 
-The runnable deck is [`inputs/hbr_ecp_energy.inp`](inputs/hbr_ecp_energy.inp) —
+The runnable deck is [`inputs/hbr_ecp_energy.oqp`](inputs/hbr_ecp_energy.oqp) —
 HBr, a BHHLYP single point, with `aug-cc-pVDZ-PP` (ECP) on Br and the
 all-electron `aug-cc-pVDZ` on H. Annotated:
 
-```ini
-[input]
-system=
-   35   0.000000000   0.000000000   0.000000000     # Br  (Z=35, Angstrom)
-   1    0.000000000   0.000000000   1.407611        # H
-charge=0
-runtype=energy          # single-point energy
-functional=bhhlyp       # half-and-half hybrid; DFT XC on top of the HF path
-basis=aug-cc-pVDZ-PP;aug-cc-pVDZ   # per-atom basis, in atom order (see below)
-method=hf               # the SCF engine (KS-DFT is driven through it)
-
-[guess]
-type=huckel             # extended-Huckel initial orbital guess
-save_mol=false
-
-[scf]
-multiplicity=1          # closed-shell singlet
-type=rhf                # restricted HF/KS reference
-
-[dftgrid]
-rad_type=becke          # Becke radial grid for the DFT XC quadrature
+```text
+rks/bhhlyp/aug-cc-pvdz-pp;aug-cc-pvdz    # model/functional/per-atom basis list
+guess(type=huckel,save_mol=false)
+dftgrid(rad_type=becke)                  # Becke radial grid for the XC quadrature
+geom="""
+Br   0.000000000   0.000000000   0.000000000
+H    0.000000000   0.000000000   1.407611000
+"""
 ```
 
 Key points:
 
-- **`basis=aug-cc-pVDZ-PP;aug-cc-pVDZ`** is the whole trick. The semicolon-separated
-  list assigns one basis **per atom, in the same order as `system`**: the first
-  atom (Br) gets `aug-cc-pVDZ-PP`, the second (H) gets `aug-cc-pVDZ`. The `-PP`
-  suffix ("pseudopotential") is what makes OpenQP load bromine's ECP and treat its
-  core implicitly; hydrogen is light, so it stays all-electron. There is no
-  separate "turn on ECP" keyword — **choosing a `-PP` basis for an atom is how you
-  request its ECP**, and the potential is built automatically through libecpint.
-- **`functional=bhhlyp`** requests the BHHLYP hybrid, so this is a DFT single
-  point. `method=hf` names the underlying SCF engine that the Kohn-Sham build runs
-  through; for a bare Hartree-Fock energy you would leave `functional` empty. The
-  ECP mechanics are identical either way.
-- **`[scf] type=rhf` with `multiplicity=1`** — HBr is a closed-shell singlet. Note
-  the electron count is over the *valence*: with the Br core removed by the ECP,
-  the SCF handles far fewer electrons than an all-electron HBr calculation would.
-- **`[dftgrid] rad_type=becke`** only affects the numerical XC quadrature for the
+- **The basis component `aug-cc-pvdz-pp;aug-cc-pvdz` is the whole trick.** The
+  semicolon-separated list assigns one basis **per atom, in the same order as the
+  geometry**: the first atom (Br) gets `aug-cc-pVDZ-PP`, the second (H) gets
+  `aug-cc-pVDZ`. The `-PP` suffix ("pseudopotential") is what makes OpenQP load
+  bromine's ECP and treat its core implicitly; hydrogen is light, so it stays
+  all-electron. There is no separate "turn on ECP" keyword — **choosing a `-PP`
+  basis for an atom is how you request its ECP**, and the potential is built
+  automatically through libecpint.
+- **`rks/bhhlyp/...`** requests the BHHLYP hybrid, so this is a DFT single point.
+  For a bare Hartree-Fock energy, drop the functional component: `rhf/lanl2dz`.
+  The ECP mechanics are identical either way.
+- **The reference is a closed-shell singlet**, which `rks` implies — HBr has an
+  even number of electrons. Note that the electron count is over the *valence*:
+  with the Br core removed by the ECP, the SCF handles far fewer electrons than an
+  all-electron HBr calculation would.
+- **`dftgrid(rad_type=becke)`** only affects the numerical XC quadrature for the
   functional; it is unrelated to the ECP.
+- **No driver line means `energy()`.** Gradients work the same way — add `grad`.
+
+For a basis that is not in the built-in library, the route also accepts an
+explicit per-label assignment (`library` plus a `library="..."` mapping) or a JSON
+file (`file:custom_basis-set.json`); see the packaged `examples/ECP/` decks.
 
 To run the same molecule **all-electron** (no ECP), you would drop the `-PP` and
 give bromine an all-electron relativistic-recontracted set — but that reintroduces
@@ -141,7 +134,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd effective-core-potentials/inputs
-openqp hbr_ecp_energy.inp
+openqp hbr_ecp_energy.oqp
 ```
 
 Python style:

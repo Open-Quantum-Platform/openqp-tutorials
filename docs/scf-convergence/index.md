@@ -7,8 +7,8 @@ until the orbitals stop changing. Most closed-shell molecules converge in a doze
 iterations without any thought. But stretched bonds, transition-metal complexes,
 diradicals, and near-degenerate states can make the default extrapolation stall,
 oscillate, or slide into the wrong solution. This tutorial shows the two knobs that
-fix almost all of those cases — the **initial guess** (`[guess] type`) and the
-**converger** (`[scf] converger_type`, including **SOSCF** and **TRAH**) — on a
+fix almost all of those cases — the **initial guess** (`guess(type=...)`) and the
+**converger** (`scf(converger_type=...)`, including **SOSCF** and **TRAH**) — on a
 plain water/PBE calculation you can run in a second.
 
 ## A little theory
@@ -32,7 +32,7 @@ convergers, each doing more work per iteration but converging more robustly:
 The other half of the battle is where you *start*. A better **initial guess** puts
 you inside the basin of the right solution, which cuts iterations and avoids
 converging to an excited or symmetry-broken state. OpenQP's default is the
-extended-**Hückel** guess (`type=huckel`); it also offers `hcore`, `sap`, `minao`,
+extended-**Hückel** guess (`guess(type=huckel)`); it also offers `hcore`, `sap`, `minao`,
 `modhuckel`, and JSON-restart guesses. For the full contract behind each option,
 see the [`[scf]`](https://open-quantum-platform.github.io/openqp-docs/keywords/scf/)
 and [`[guess]`](https://open-quantum-platform.github.io/openqp-docs/keywords/guess/)
@@ -40,71 +40,58 @@ keyword pages.
 
 ## Input-file style
 
-The runnable deck is [`inputs/h2o_scf_soscf.inp`](inputs/h2o_scf_soscf.inp) — water
+The runnable deck is [`inputs/h2o_scf_soscf.oqp`](inputs/h2o_scf_soscf.oqp) — water
 in the 6-31G basis, a spin-restricted PBE reference, converged with the **SOSCF**
 converger starting from a **Hückel** guess. Annotated:
 
-```ini
-[input]
-system=
- 8   0.000000000   0.000000000  -0.041061554   # O   (Angstrom)
- 1  -0.533194329   0.533194329  -0.614469223   # H
- 1   0.533194329  -0.533194329  -0.614469223   # H
-
-charge=0
-method=hf              # SCF engine (HF machinery; DFT is switched on by functional)
-basis=6-31g
-runtype=energy         # single-point SCF energy
-functional=pbe         # non-empty -> Kohn-Sham DFT with the PBE functional
-d4=false               # no DFT-D4 dispersion correction
-
-[guess]
-type=huckel            # extended-Hückel initial orbital guess (the default)
-save_mol=true          # keep the converged orbitals/molecule data for restart
-
-[scf]
-type=rhf               # closed-shell restricted reference (rhf | uhf | rohf)
-multiplicity=1         # singlet ground state
-converger_type=soscf   # second-order SCF converger (vs. the default diis / or trah)
-maxit=60               # max SCF iterations before giving up
-conv=1.0e-6            # energy/density convergence threshold (Hartree)
-
-[dftgrid]
-rad_npts=96            # radial quadrature points for the DFT XC grid
-ang_npts=302           # angular (Lebedev) points per radial shell
-pruned=                # pruning scheme; empty = use the default (unpruned) grid
+```text
+rks/pbe/6-31g                              # restricted Kohn-Sham, PBE, 6-31G
+d4=false                                   # no DFT-D4 dispersion correction
+guess(type=huckel,save_mol=true)           # where the SCF starts
+scf(converger_type=soscf,maxit=60,conv=1e-6)   # how it gets there
+dftgrid(rad_npts=96,ang_npts=302,pruned="")    # the XC quadrature grid
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""
 ```
 
 Key points:
 
-- **The reference is DFT, not bare HF.** `method=hf` selects the SCF machinery,
-  but a **non-empty `functional`** (`pbe`) promotes it to Kohn-Sham DFT. Leaving
-  `functional` empty would give a Hartree-Fock reference instead.
-- **`[guess] type` chooses where the SCF starts.** `huckel` is the robust default;
-  switching to `hcore`, `sap`, or `minao` changes only the starting orbitals, not
-  the final answer, but can change how many iterations (and whether) you converge.
-  `save_mol=true` writes the converged orbitals so a later run can restart from them.
-- **`[scf] converger_type` chooses how it gets there.** This deck uses `soscf`.
-  Change one line to switch strategy:
+- **`rks/pbe/6-31g` is Kohn-Sham DFT, not bare HF.** The middle component is the
+  functional; `rhf/6-31g` — no functional at all — would give a Hartree-Fock
+  reference. `uks` and `roks` are the unrestricted and restricted-open-shell
+  Kohn-Sham models.
+- **`guess(...)` chooses where the SCF starts.** `type=huckel` is the robust
+  default; switching to `hcore`, `sap`, or `minao` changes only the starting
+  orbitals, not the final answer, but can change how many iterations (and whether)
+  you converge. `save_mol=true` writes the converged orbitals so a later run can
+  restart from them.
+- **`scf(converger_type=...)` chooses how it gets there.** This deck uses `soscf`.
+  Change one option to switch strategy:
 
-  ```ini
-  [scf]
-  converger_type=diis     # default first-order DIIS extrapolation
+  ```text
+  scf(converger_type=diis,maxit=60,conv=1e-6)     # default first-order DIIS extrapolation
   ```
 
-  ```ini
-  [scf]
-  converger_type=trah     # trust-region augmented-Hessian: for hard, stalling cases
+  ```text
+  scf(converger_type=trah,maxit=60,conv=1e-6)     # trust-region augmented-Hessian: for hard, stalling cases
   ```
 
   All three converge this easy water case to the same energy; the difference shows
   up on difficult references, where `diis` may stall and `trah` still converges.
 - **`maxit` and `conv` are the stopping rules.** Raise `maxit` (here 60, above the
-  default of 30) for slow cases; tighten `conv` (e.g. `1.0e-8`) when you need
+  default of 30) for slow cases; tighten `conv` (e.g. `1e-8`) when you need
   high-precision energies or gradients.
-- **`[dftgrid]` sets the XC integration grid.** `rad_npts` × `ang_npts` is a fine
+- **`dftgrid(...)` sets the XC integration grid.** `rad_npts` × `ang_npts` is a fine
   (96, 302) grid; a coarse grid can itself cause the SCF energy to jitter and fail
   to converge, so grid quality and SCF convergence are linked.
+
+Note the shape of the deck: the route line says *what physics*, and everything
+that follows is a named knob on one legacy section. Convergence controls are
+exactly the kind of implementation detail the concise surface leaves in exact
+section calls rather than promoting to the route.
 
 ## Python style
 
@@ -161,7 +148,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd scf-convergence/inputs
-openqp h2o_scf_soscf.inp
+openqp h2o_scf_soscf.oqp
 ```
 
 Python style:
@@ -182,7 +169,7 @@ This is a single-point SCF run, so the number you want is the **converged SCF
   prints the energy and the density/gradient change, and you want to see that
   change shrink monotonically past `conv=1.0e-6` and the run report **converged**
   within `maxit` iterations. If it hits `maxit` without converging, that is the
-  signal to switch `converger_type` (try `trah`) or improve the `[guess]`.
+  signal to switch `converger_type` (try `trah`) or improve the `guess(...)`.
 - From **Python**, `mol.get_scf_energy()` returns the converged SCF total energy,
   and `mol.get_results()` returns the results dictionary (the `energy` field
   matches what is written to `<project>.json`).

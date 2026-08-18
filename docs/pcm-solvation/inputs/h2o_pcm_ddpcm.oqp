@@ -1,0 +1,10 @@
+# Water RHF energy in a ddPCM dielectric continuum (energy-only PCM/ddX).
+rhf/6-31g*
+guess(type=huckel,save_mol=false)
+scf(conv=1e-6)
+pcm(enabled=true,backend=ddx,mode=reference_scf,model=ddpcm,epsilon=78.3553)
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""

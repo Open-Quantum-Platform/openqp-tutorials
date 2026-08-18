@@ -1,5 +1,5 @@
 """SCF convergence with the SOSCF converger — Python-API equivalent of
-h2o_scf_soscf.inp.
+h2o_scf_soscf.oqp.
 
 job.theory.dft(...) forwards any extra keyword straight into the [scf] section,
 so converger_type / conv / maxit land exactly where the input-file deck puts them.

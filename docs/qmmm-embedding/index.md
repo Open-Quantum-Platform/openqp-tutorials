@@ -38,94 +38,67 @@ what they *do* with it: a single-point energy versus a short MD run.
 
 ## Input-file style
 
-### Single-point energy — [`water_dimer_qmmm_energy.inp`](inputs/water_dimer_qmmm_energy.inp)
+### Single-point energy — [`water_dimer_qmmm_energy.oqp`](inputs/water_dimer_qmmm_energy.oqp)
 
 The QM region is the **first** water (PDB atoms 0, 1, 2); the **second** water is
 MM and polarizes the QM density through ESPF. Annotated:
 
-```ini
-[input]
-system     = water_dimer.pdb 0 1 2   # PDB path + 0-based indices of the QM atoms
-charge     = 0
-runtype    = energy                  # single-point energy (+ requested properties)
-method     = hf                      # HF/DFT driver (functional below picks DFT)
-functional = bhhlyp                  # half-and-half hybrid; empty => plain HF
-basis      = 6-31g*
-qmmm_flag  = True                    # turn on QM/MM; without it [qmmm] is ignored
-
-[scf]
-type         = rhf                   # closed-shell reference for the QM region
-multiplicity = 1
-
-[qmmm]
-forcefield_files = tip3p.xml         # OpenMM force field for the MM water
-cutoff           = NoCutoff          # isolated (non-periodic) cluster
-embedding        = electrostatic     # full ESPF electrostatic embedding
+```text
+rks/bhhlyp/6-31g*                   # QM level of theory (Kohn-Sham, BHHLYP)
+geom="water_dimer.pdb 0 1 2"        # PDB path + 0-based indices of the QM atoms
+energy()                            # single-point energy (+ requested properties)
+qmmm(forcefield_files=tip3p.xml,cutoff=NoCutoff,embedding=electrostatic)
 ```
 
-Key points, section by section:
+Key points:
 
-- **`system`** does double duty here. Because the first token ends in `.pdb`,
-  OpenQP reads the geometry *from the PDB* and interprets the trailing numbers
-  (`0 1 2`) as the **0-based indices of the QM atoms**. Everything else in the
-  PDB is MM. (Ranges like `0-2` work too.)
-- **`method=hf` with a non-empty `functional`** makes this a DFT (Kohn-Sham) run —
-  `bhhlyp` is the half-and-half hybrid. Leave `functional` empty for plain
+- **`geom` does double duty here.** Because the value ends in `.pdb` followed by
+  indices, OpenQP reads the geometry *from the PDB* and interprets the trailing
+  numbers (`0 1 2`) as the **0-based indices of the QM atoms**. Everything else in
+  the PDB is MM. (Ranges like `0-2` work too.)
+- **`rks/bhhlyp/6-31g*`** makes the QM region a Kohn-Sham DFT calculation with the
+  half-and-half hybrid. Drop the functional component (`rhf/6-31g*`) for plain
   Hartree-Fock.
-- **`qmmm_flag=True`** is the master switch: it turns on the ESPF driver and makes
-  OpenQP read `[qmmm]`. Without it the `[qmmm]` section is silently ignored and
-  you get a gas-phase calculation of the QM atoms only.
-- In **`[qmmm]`**, `forcefield_files` parameterizes the MM atoms (the QM atoms'
+- **`qmmm(...)` is the master switch.** Supplying it turns on the ESPF driver *and*
+  carries the MM settings; there is no separate flag to forget, and the PDB path
+  from `geom` is propagated into the section for you. (A top-level `qmmm=true`
+  exists for turning QM/MM on with defaults, but combining it with `qmmm(...)` is
+  rejected as saying the same thing twice.)
+- Inside the call, `forcefield_files` parameterizes the MM atoms (the QM atoms'
   electrostatics come from ESPF, not from fixed MM charges); `cutoff=NoCutoff`
   says isolated cluster; `embedding=electrostatic` selects the full ESPF
   electrostatic coupling (as opposed to a cheaper mechanical embedding).
 
-### Ground-state MD — [`water_dimer_qmmm_md.inp`](inputs/water_dimer_qmmm_md.inp)
+### Ground-state MD — [`water_dimer_qmmm_md.oqp`](inputs/water_dimer_qmmm_md.oqp)
 
 Same dimer, now **propagated in time**: the QM water moves under the embedded
 QM/ESPF force, the MM water under the force field, coupled through ESPF. This is
-the ground-state QM/MM MD path (the `QMMM_MD` driver, `runtype=md`). Annotated:
+the ground-state QM/MM MD path (the `QMMM_MD` driver). Annotated:
 
-```ini
-[input]
-runtype    = md                      # ground-state QM/MM MD (OpenMM integrator)
-qmmm_flag  = True
-method     = hf
-functional = bhhlyp
-basis      = 6-31g
-charge     = 0
-
-[scf]
-type         = rhf
-multiplicity = 1
-
-[qmmm]
-pdb_file         = water_dimer.pdb   # full QM+MM system (MD path reads it here)
-forcefield_files = tip3p.xml
-qm_atoms         = 0-2               # 0-based indices of the QM water
-cutoff           = NoCutoff          # isolated cluster (use PME for a periodic box)
-embedding        = electrostatic     # full ESPF electrostatic embedding
-n_steps          = 5                 # number of MD steps (raise for a real run)
-timestep         = 0.5               # fs
-ensemble         = nve               # microcanonical (Verlet); nvt/npt = Langevin
-temperature      = 300.0             # K (initial velocities / thermostat target)
+```text
+rks/bhhlyp/6-31g
+geom="water_dimer.pdb 0-2"          # full system + the QM water's 0-based indices
+md()                                # ground-state QM/MM MD (OpenMM integrator)
+qmmm(forcefield_files=tip3p.xml,cutoff=NoCutoff,embedding=electrostatic,
+     n_steps=5,timestep=0.5,ensemble=nve,temperature=300.0)
 ```
 
 What changed versus the energy deck:
 
-- **`runtype=md`** selects the ground-state QM/MM MD driver. (This path is *not*
-  part of `openqp --run_tests all`; it needs OpenMM.)
-- The QM region is now specified **inside `[qmmm]`**, not on the `system` line:
-  `pdb_file` holds the full QM+MM system and `qm_atoms=0-2` carves out the QM
-  water. There is no `system=` line — the MD path reads geometry from `pdb_file`.
-- The extra `[qmmm]` keys are the **integrator controls**, read by the MD driver:
-  `n_steps` (how many steps), `timestep` (fs), `ensemble` (`nve` microcanonical
-  Verlet, or `nvt` / `npt` Langevin), and `temperature` (initial-velocity /
-  thermostat target in K). Five steps at 0.5 fs is a smoke test — raise `n_steps`
-  for a real trajectory.
+- **`md()` replaces `energy()`**, selecting the ground-state QM/MM MD driver.
+  (This path is *not* part of `openqp --run-tests all`; it needs OpenMM.)
+- **The QM region is still named the same way** — `geom="water_dimer.pdb 0-2"` —
+  even though the legacy MD deck specified it with a separate `[qmmm] pdb_file`
+  plus `qm_atoms`. One geometry line serves both drivers, and the lowering fills
+  in `pdb_file` and `qm_atoms` for the MD path.
+- The extra `qmmm(...)` keys are the **integrator controls**, read by the MD
+  driver: `n_steps` (how many steps), `timestep` (fs), `ensemble` (`nve`
+  microcanonical Verlet, or `nvt` / `npt` Langevin), and `temperature`
+  (initial-velocity / thermostat target in K). Five steps at 0.5 fs is a smoke
+  test — raise `n_steps` for a real trajectory.
 
 > For **excited-state** or **nonadiabatic** QM/MM dynamics you do *not* use
-> `runtype=md`; you use `runtype=namd` with an MRSF-TDDFT theory, as in the
+> `md()`; you use `namd(...)` with an MRSF-TDDFT route, as in the
 > [SOC-NAMD-QMMM tutorial](../soc-namd-qmmm/index.md).
 
 ## Python style
@@ -160,7 +133,7 @@ print("Embedded QM/MM SCF energy:", mol.get_scf_energy())
 ```
 
 The `"water_dimer.pdb 0 1 2"` string passed to `job.molecule(...)` is the exact
-same PDB-plus-indices `system` value as the `.inp` deck, so the two styles build
+same PDB-plus-indices `system` value as the `.oqp` deck, so the two styles build
 the identical calculation.
 
 ### Ground-state MD — [`water_dimer_qmmm_md.py`](inputs/water_dimer_qmmm_md.py)
@@ -187,11 +160,11 @@ mol = job.run(run_type="md")        # ground-state QM/MM MD
 
 One honest caveat about the MD script: the integrator controls `n_steps`,
 `timestep`, and `ensemble` are read by the `QMMM_MD` driver **directly from the
-`[qmmm]` section of the input file** — they are not part of the strict Python-API
-schema. So the Python script above sets up the QM/MM system and selects
-`runtype=md`, but the trajectory length / step / ensemble fall back to the driver
+QM/MM section of the input file** — they are not part of the strict Python-API
+schema. So the Python script above sets up the QM/MM system and selects the MD
+run type, but the trajectory length / step / ensemble fall back to the driver
 defaults (`n_steps=1000`, `timestep=1.0` fs, `ensemble=nve`). To pin them to the
-tutorial values (`n_steps=5`, `timestep=0.5`, `ensemble=nve`), run the `.inp`
+tutorial values (`n_steps=5`, `timestep=0.5`, `ensemble=nve`), run the `.oqp` deck
 with the CLI — that is the recommended entry point for MD.
 
 ## Run it
@@ -203,11 +176,11 @@ style works for the energy deck:
 cd qmmm-embedding/inputs
 
 # single-point energy
-openqp water_dimer_qmmm_energy.inp        # input-file style
+openqp water_dimer_qmmm_energy.oqp        # input-file style
 python water_dimer_qmmm_energy.py         # Python-API style
 
 # ground-state MD (CLI is the recommended entry point; see caveat above)
-openqp water_dimer_qmmm_md.inp
+openqp water_dimer_qmmm_md.oqp
 python water_dimer_qmmm_md.py
 ```
 

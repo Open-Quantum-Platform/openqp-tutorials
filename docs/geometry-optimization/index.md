@@ -10,7 +10,7 @@ separates two minima — the bottleneck geometry whose energy sets a reaction
 barrier. You run these before almost anything else: frequencies, reaction
 energies, and barrier heights are all defined *at* optimized geometries. This
 tutorial does both on small molecules — a minimum for water, a saddle point for
-the HCN → HNC isomerization — and shows OpenQP's two optimizer backends.
+the HCN → HNC isomerization.
 
 ## A little theory
 
@@ -31,114 +31,83 @@ rotation internal coordinates (**TRIC**) — strongly affects how fast it
 converges; internal-coordinate systems remove the redundant translations and
 rotations and follow chemical bonds, so they usually beat raw Cartesians. The
 **trust radius** caps how far a single step may move, keeping the quadratic model
-honest. OpenQP ships two optimizer backends you can select per job: the native
-`oqp` optimizer and the external [geomeTRIC](https://geometric.readthedocs.io/)
-library. For the full contract see the
+honest. OpenQP ships two optimizer backends: the native `oqp` optimizer, which the
+concise `.oqp` format always uses, and the external
+[geomeTRIC](https://geometric.readthedocs.io/) library, still selectable from the
+Python API and from legacy `.inp` decks. For the full contract see the
 [optimization workflow page](https://open-quantum-platform.github.io/openqp-docs/).
 
 ## Input-file style
 
-### Minimum: water (`inputs/h2o_optimize.inp`)
+### Minimum: water (`inputs/h2o_optimize.oqp`)
 
-The first deck relaxes water to its nearest minimum with the **native `oqp`**
-optimizer. Annotated:
+The first deck relaxes water to its nearest minimum. Annotated:
 
-```ini
-[input]
-system=
-   O  -0.0000000000   0.0000000000  -0.0410615540   # starting geometry (Angstrom)
-   H  -0.5331943294   0.5331943294  -0.6144692230
-   H   0.5331943294  -0.5331943294  -0.6144692230
-charge=0
-functional=bhhlyp       # functional is set but ignored — method=hf uses HF exchange only
-basis=6-31g*
-runtype=optimize        # relax to the nearest MINIMUM
-method=hf               # Hartree-Fock energy and gradient
-
-[scf]
-type=rhf                # closed-shell restricted HF reference
-multiplicity=1          # singlet
-
-[optimize]
-lib=oqp                 # optimizer backend: native OpenQP
-istate=0                # state to optimize: 0 = HF/DFT ground state
-maxit=30                # max optimization cycles
-
-[oqp]                   # backend section for lib=oqp
-coordsys=tric           # step in translation-rotation internal coordinates
-trust=0.2               # trust radius (max step size)
+```text
+rks/bhhlyp/6-31g*                # BHHLYP Kohn-Sham energy and gradient
+opt(coordsys=tric,trust=0.2)     # relax to the nearest MINIMUM
+geom="""
+O  -0.0000000000   0.0000000000  -0.0410615540
+H  -0.5331943294   0.5331943294  -0.6144692230
+H   0.5331943294  -0.5331943294  -0.6144692230
+"""
 ```
 
-Section by section:
+Line by line:
 
-- **`[input]`** holds the starting geometry and the level of theory. `runtype=optimize`
-  is what turns a single point into a **minimization**; `method=hf` picks a
-  Hartree-Fock energy/gradient. (`functional=bhhlyp` is present but inert here —
-  with `method=hf` OpenQP uses exact HF exchange and no DFT correlation.)
-- **`[scf]`** defines the reference the gradient is taken on: `type=rhf`,
-  closed-shell `multiplicity=1`.
-- **`[optimize]`** is the backend-independent driver. **`lib=oqp`** selects the
-  native optimizer; **`istate=0`** says optimize the ground state (raise it to
-  follow an excited state); **`maxit=30`** caps the number of geometry cycles.
-- **`[oqp]`** carries the settings *specific to* the `lib=oqp` backend:
-  **`coordsys=tric`** (TRIC internal coordinates) and **`trust=0.2`** (the step
-  cap, in the optimizer's internal units).
+- **`rks/bhhlyp/6-31g*`** is the level of theory the gradient is taken at: a
+  restricted Kohn-Sham reference with the BHHLYP functional. Drop the middle
+  component (`rhf/6-31g*`) for a Hartree-Fock optimization.
+- **`opt(...)` is the driver**, and it is what turns a single point into a
+  **minimization**. With a ground-state model there is no state to name; on a
+  response route you would write `opt(S1)` to relax on an excited surface.
+- **`coordsys=tric` and `trust=0.2`** are options of that driver: step in
+  translation-rotation internal coordinates, with a trust radius (maximum step)
+  of 0.2. The concise format always uses the **native OpenQP optimizer**, so
+  there is no backend to select and no separate backend section — the step
+  controls sit directly on the driver.
+- **`maxit`** caps the geometry cycles; it is omitted here because 30 is already
+  the default.
 
-### Transition state: HCN → HNC (`inputs/hcn_ts.inp`)
+### Transition state: HCN → HNC (`inputs/hcn_ts.oqp`)
 
 The second deck searches for the **saddle point** of the HCN ⇌ HNC
-isomerization, using the **geomeTRIC** backend. The only structural difference
-from a minimization is `runtype=ts` and a different backend section.
+isomerization. The only structural difference from a minimization is the driver
+name.
 
-```ini
-[input]
-system=
-   C   0.0000000000   0.0000000000   0.0000000000   # bent guess near the saddle (Angstrom)
-   N   0.0000000000   0.0000000000   1.1700000000
-   H  -1.1000000000   0.0000000000   0.0000000000
-charge=0
-functional=bhhlyp       # inert with method=hf (see above)
-basis=3-21g             # small, fast basis for the demo
-runtype=ts              # search for a first-order SADDLE POINT
-method=hf
-
-[scf]
-type=rhf
-multiplicity=1
-maxit=30                # max SCF iterations per point
-
-[optimize]
-lib=geometric           # optimizer backend: external geomeTRIC
-istate=0                # ground-state saddle point
-maxit=50                # TS searches often need more cycles than minima
-
-[geometric]             # backend section for lib=geometric
-coordsys=dlc            # delocalized internal coordinates
-trust=0.05              # small trust radius — TS steps must stay in the quadratic region
-tmax=0.1                # hard cap on the maximum single step
-hessian=never           # do not build/update an exact Hessian (use the model Hessian)
-convergence_set=GAU     # Gaussian-style convergence thresholds
-prefix=hcn_ts           # base name for geomeTRIC's own output files
+```text
+rks/bhhlyp/3-21g                        # small, fast basis for the demo
+ts(S0,maxit=50,coordsys=dlc,trust=0.05) # search for a first-order SADDLE POINT
+scf(maxit=30)                           # max SCF iterations per point
+geom="""
+C   0.0000000000   0.0000000000   0.0000000000
+N   0.0000000000   0.0000000000   1.1700000000
+H  -1.1000000000   0.0000000000   0.0000000000
+"""
 ```
 
 What changes relative to the water minimization:
 
-- **`runtype=ts`** switches the driver from downhill minimization to a
-  first-order saddle-point search.
-- **`[optimize] lib=geometric`** selects the external geomeTRIC engine, so the
-  backend-specific keys live in a **`[geometric]`** section instead of `[oqp]`.
-- The geomeTRIC keys are its own vocabulary: **`coordsys=dlc`** (delocalized
-  internals), a deliberately small **`trust=0.05`** with a hard **`tmax=0.1`**
-  step cap (TS steps are easy to overshoot), **`hessian=never`** (rely on the
-  cheap model Hessian rather than computing an exact one), **`convergence_set=GAU`**
-  (the familiar Gaussian force/displacement thresholds), and **`prefix=hcn_ts`**
-  for the names of geomeTRIC's log files.
-- **`maxit=50`** in `[optimize]` — saddle points usually take more cycles than
-  minima, so the ceiling is raised.
+- **`ts(...)` replaces `opt(...)`**, switching the driver from downhill
+  minimization to a first-order saddle-point search (native P-RFO). That single
+  token is the whole difference in intent.
+- **`coordsys=dlc`** works in delocalized internal coordinates, and a deliberately
+  small **`trust=0.05`** keeps each step inside the quadratic region — TS steps are
+  easy to overshoot.
+- **`maxit=50`** — saddle points usually take more cycles than minima, so the
+  ceiling is raised above the default 30.
+- **`scf(maxit=30)`** is an exact section call bounding the SCF at each geometry.
 
-The pattern is the same for both jobs: `[optimize]` chooses the backend and the
-state, and a backend-named section (`[oqp]` **or** `[geometric]`) carries that
-backend's step-control keywords.
+`ts(...)` also takes `follow` (which mode to follow uphill) and `hessian`
+(how to seed the initial Hessian); see the manual for the full list.
+
+> **Note.** Earlier versions of this deck ran the saddle-point search through the
+> external **geomeTRIC** backend, with its own `tmax`, `convergence_set=GAU`, and
+> `hessian=never` vocabulary. The concise `.oqp` format deliberately hides
+> optimizer-backend selection and always uses the native engine, so those
+> geomeTRIC-only keys have no `.oqp` spelling. `opt(...)` — but not `ts(...)` —
+> still accepts an explicit `lib=geometric`. If you need geomeTRIC for a TS
+> search, use a legacy `.inp` deck with `[optimize] lib=geometric`.
 
 ## Python style
 
@@ -154,7 +123,7 @@ from oqp.openqp import OpenQP
 
 job = OpenQP("h2o_optimize", silent=1)
 
-# Same starting geometry as the .inp (Angstrom); charge 0, closed-shell singlet.
+# Same starting geometry as the .oqp (Angstrom); charge 0, closed-shell singlet.
 job.molecule(
     """
 O  -0.0000000000   0.0000000000  -0.0410615540
@@ -243,13 +212,20 @@ print(mol.get_results())
 
 ## Run it
 
-Both styles produce the same result; run from the `inputs/` folder.
+Run from the `inputs/` folder.
+
+> **Note.** The Python twins on this page are *not* numerically identical to the
+> decks: they call `job.theory.hf(...)`, i.e. pure Hartree-Fock, while the decks
+> carry the `bhhlyp` functional and are therefore BHHLYP Kohn-Sham. Both find the
+> same stationary points, but at different levels of theory. Use
+> `job.theory.dft(functional="bhhlyp", ...)` in the scripts to match the decks
+> exactly.
 
 Water minimization:
 
 ```bash
 cd geometry-optimization/inputs
-openqp h2o_optimize.inp       # input-file style
+openqp h2o_optimize.oqp       # input-file style
 python h2o_optimize.py        # Python-API style
 ```
 
@@ -257,12 +233,13 @@ HCN → HNC transition state:
 
 ```bash
 cd geometry-optimization/inputs
-openqp hcn_ts.inp             # input-file style
+openqp hcn_ts.oqp             # input-file style
 python hcn_ts.py              # Python-API style
 ```
 
-Both need OpenQP installed (`pip install openqp`); the TS deck additionally uses
-the external **geomeTRIC** backend (`pip install geometric`).
+Both need OpenQP installed (`pip install openqp`). The `.oqp` decks run entirely
+on the native optimizer; the TS *Python* script below selects the external
+**geomeTRIC** backend, which needs `pip install geometric`.
 
 ## Reading the output
 
@@ -270,7 +247,7 @@ An optimization run prints one line per geometry cycle — the energy, the maxim
 and RMS gradient, and the step taken — and then reports convergence. The numbers
 that matter:
 
-- **`mol.get_scf_energy()`** is the SCF (here HF) energy **at the final
+- **`mol.get_scf_energy()`** is the SCF (here BHHLYP Kohn-Sham) energy **at the final
   geometry** — the energy of the optimized minimum, or the energy at the
   converged saddle point. This is the number you carry forward into barrier
   heights and reaction energies.

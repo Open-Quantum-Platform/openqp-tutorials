@@ -1,6 +1,6 @@
 """MRSF-TDDFT excited states + gradient, BHHLYP/6-31G* on water.
 
-Python-API equivalent of h2o_mrsf.inp: 3 MRSF roots (S0, S1, S2) and the
+Python-API equivalent of h2o_mrsf.oqp: 3 MRSF roots (S0, S1, S2) and the
 analytic gradient of state 2 (S1).
 """
 

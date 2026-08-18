@@ -1,6 +1,6 @@
 """MRSF-TDDFT spin-orbit coupling of water via the OpenQP Python API.
 
-Equivalent to inputs/h2o_soc.inp: a triplet-ROHF MRSF-TDDFT calculation that
+Equivalent to inputs/h2o_soc.oqp: a triplet-ROHF MRSF-TDDFT calculation that
 forms the singlet/triplet manifold and the SOC matrix elements between them.
 Run with:  python h2o_soc.py
 """

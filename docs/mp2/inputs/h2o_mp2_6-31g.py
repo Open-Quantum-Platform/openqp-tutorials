@@ -1,4 +1,4 @@
-"""Standalone MP2 energy for water (6-31G), matching h2o_mp2_6-31g.inp.
+"""Standalone MP2 energy for water (6-31G), matching h2o_mp2_6-31g.oqp.
 
 Run with:  python h2o_mp2_6-31g.py
 
@@ -10,7 +10,7 @@ from oqp.openqp import OpenQP
 
 job = OpenQP("h2o_mp2", silent=1)
 
-# Same geometry as the .inp (Angstrom). "water" is a built-in name, but we
+# Same geometry as the .oqp deck (Angstrom). "water" is a built-in name, but we
 # spell out the coordinates so the two styles produce the identical number.
 job.molecule(
     """

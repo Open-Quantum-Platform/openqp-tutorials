@@ -1,6 +1,6 @@
 """TDDFT / 6-31G* / B3LYP5 vertical excitation energies of H2O.
 
-Equivalent to inputs/h2o_tddft_energy.inp, driven through the OpenQP Python API.
+Equivalent to inputs/h2o_tddft_energy.oqp, driven through the OpenQP Python API.
 job.theory.tddft(...) sets method=tdhf with a functional (TDDFT) and an RHF
 reference; nstate is the number of excited-state roots to solve.
 

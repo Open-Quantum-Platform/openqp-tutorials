@@ -1,0 +1,11 @@
+# HCN -> HNC isomerization transition state, BHHLYP/3-21G.
+# ts(S0) runs the native P-RFO transition-state search; coordsys/trust are its
+# options.  The concise format always uses the native OpenQP geometry engine.
+rks/bhhlyp/3-21g
+ts(S0,maxit=50,coordsys=dlc,trust=0.05)
+scf(maxit=30)
+geom="""
+C   0.0000000000   0.0000000000   0.0000000000
+N   0.0000000000   0.0000000000   1.1700000000
+H  -1.1000000000   0.0000000000   0.0000000000
+"""

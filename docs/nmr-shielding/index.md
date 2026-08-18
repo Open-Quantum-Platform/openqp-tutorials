@@ -40,51 +40,40 @@ theory and the response formalism, see the
 
 ## Input-file style
 
-The runnable deck is [`inputs/h2o_giao-nmr.inp`](inputs/h2o_giao-nmr.inp) — water
+The runnable deck is [`inputs/h2o_giao-nmr.oqp`](inputs/h2o_giao-nmr.oqp) — water
 in the minimal STO-3G basis, a closed-shell RHF reference, GIAO shielding.
 Annotated:
 
-```ini
-[input]
-system=
-   8   0.000000000   0.000000000  -0.041061554   # O   (Angstrom)
-   1  -0.533194329   0.533194329  -0.614469223   # H
-   1   0.533194329  -0.533194329  -0.614469223   # H
-charge=0
-runtype=energy          # shielding is a post-SCF property on a single-point wavefunction
-basis=sto-3g
-method=hf               # Hartree-Fock reference (not KS-DFT here)
-
-[guess]
-type=huckel             # extended-Huckel initial orbital guess
-
-[scf]
-multiplicity=1          # closed-shell singlet
-type=rhf                # restricted Hartree-Fock reference
-
-[properties]
-scf_prop=nmr            # request the NMR shielding property after the SCF
-nmr_gauge=giao          # gauge treatment: giao (gauge-including) or cgo (common origin)
+```text
+rhf/sto-3g                # Hartree-Fock reference (not KS-DFT here)
+nmr(gauge=giao)           # request the shielding tensor; giao | cgo
+guess(type=huckel)        # extended-Huckel initial orbitals
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""
 ```
 
 Key points:
 
-- **`[input] method=hf`** with **`runtype=energy`** converges an ordinary
-  single-point wavefunction; the shielding is layered on top afterwards, so no
-  special run type is needed.
-- The **`[scf]` section** fixes the reference: `type=rhf` and `multiplicity=1` for
-  closed-shell water. The `[guess] type=huckel` line just seeds the SCF with an
-  extended-Hückel guess.
-- The **`[properties]` section is what turns the shielding on.** `scf_prop=nmr`
-  asks OpenQP to evaluate the NMR shielding tensor as a post-SCF property, and
-  `nmr_gauge` picks the gauge scheme. To switch from London orbitals to a common
-  gauge origin, change one line:
+- **`rhf/sto-3g`** converges an ordinary single-point wavefunction. There is no
+  driver line, so the deck runs `energy()`; the shielding is layered on top of that
+  converged wavefunction afterwards, so no special run type is needed.
+- **`nmr(...)` is what turns the shielding on.** It is a *modifier*, not a driver:
+  it rides along with whatever calculation the deck is already doing. Written bare
+  as `nmr`, it uses the gauge-origin-independent default; `gauge=` names the scheme
+  explicitly. To switch from London orbitals to a common gauge origin, change the
+  one argument:
 
-  ```ini
-  [properties]
-  scf_prop=nmr
-  nmr_gauge=cgo         # common gauge origin instead of GIAO
+  ```text
+  nmr(gauge=cgo)          # common gauge origin instead of GIAO
   ```
+
+- **The reference is a closed-shell singlet**, which `rhf` implies. For an
+  open-shell molecule use `uhf`/`rohf` with a `mult=` line; for a DFT density,
+  add a functional component (`rks/b3lyp5/sto-3g`).
+- **`guess(type=huckel)`** is an exact call into the legacy `[guess]` section.
 
 ## Python style
 
@@ -136,7 +125,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd nmr-shielding/inputs
-openqp h2o_giao-nmr.inp
+openqp h2o_giao-nmr.oqp
 ```
 
 Python style:

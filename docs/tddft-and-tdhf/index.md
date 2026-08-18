@@ -38,45 +38,35 @@ derivation and the full keyword contract, see the
 ## Input-file style
 
 The runnable deck is
-[`inputs/h2o_tddft_energy.inp`](inputs/h2o_tddft_energy.inp) — water in the 6-31G\*
+[`inputs/h2o_tddft_energy.oqp`](inputs/h2o_tddft_energy.oqp) — water in the 6-31G\*
 basis, a closed-shell RHF reference, B3LYP5 TDDFT, three excited-state roots.
 Annotated:
 
-```ini
-[input]
-system=
-   8   0.000000000   0.000000000  -0.041061554   # O   (Angstrom)
-   1  -0.533194329   0.533194329  -0.614469223   # H
-   1   0.533194329  -0.533194329  -0.614469223   # H
-charge=0
-runtype=energy          # vertical excitation energies at a fixed geometry
-basis=6-31g*
-functional=b3lyp5       # non-empty -> TDDFT; leave empty for plain TDHF
-method=tdhf             # the linear-response driver (drives BOTH TDDFT and TDHF)
-
-[guess]
-type=huckel             # extended-Huckel initial orbital guess
-
-[scf]
-multiplicity=1          # closed-shell singlet ground state
-type=rhf                # restricted HF/KS reference
-
-[tdhf]
-nstate=3                # number of excited-state roots to solve
+```text
+tddft(nstate=3)/b3lyp5/6-31g*    # model(roots)/functional/basis
+guess(type=huckel)               # extended-Huckel initial orbitals
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""
 ```
 
 Key points:
 
-- **`method=tdhf`** in `[input]` selects the linear-response driver. It is the
-  common engine for *both* models — the presence or absence of **`functional`** is
-  what distinguishes them. With `functional=b3lyp5` you get **TDDFT**; delete the
-  `functional` line (or leave it empty) and the same deck becomes plain **TDHF**.
-- **`runtype=energy`** requests excitation energies at the input geometry (vertical
-  excitations). No excited-state gradient is computed here.
-- The **reference is a closed-shell singlet**, so `[scf] type=rhf` and
-  `multiplicity=1`. The response is built on top of this converged reference.
-- **`[tdhf] nstate=3`** asks for the three lowest roots. Raise it to resolve more
+- **`tddft`** names the linear-response model directly. The functional component
+  is what separates the two models: `tddft/b3lyp5/6-31g*` is **TDDFT**, while
+  `tdhf/6-31g*` — no functional component at all — is plain **TDHF**. `tda` and
+  `cis` are the Tamm-Dancoff variants of the same pair.
+- **`nstate=3`** is a *model option*, written in the route parentheses, because it
+  describes the response problem rather than the workflow. Raise it to resolve more
   of the spectrum.
+- **No driver line means `energy()`** — vertical excitation energies at the input
+  geometry. Add `grad(S1)` for an excited-state gradient, or `opt(S1)` to relax on
+  the S1 surface.
+- The **reference is a closed-shell singlet**, which is what `tddft` implies. For
+  an open-shell reference add `mult=3`; the model then builds on a UHF reference.
+- **`guess(type=huckel)`** is an exact call into the legacy `[guess]` section.
 
 ## Python style
 
@@ -123,7 +113,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd tddft-and-tdhf/inputs
-openqp h2o_tddft_energy.inp
+openqp h2o_tddft_energy.oqp
 ```
 
 Python style:

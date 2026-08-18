@@ -1,6 +1,6 @@
 """RHF/STO-3G GIAO NMR nuclear magnetic shielding of water.
 
-Equivalent of inputs/h2o_giao-nmr.inp using the OpenQP Python API.
+Equivalent of inputs/h2o_giao-nmr.oqp using the OpenQP Python API.
 Run with:  python h2o_giao-nmr.py
 """
 

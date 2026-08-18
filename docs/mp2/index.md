@@ -42,68 +42,56 @@ defined). For the derivation and the parameterizations behind each preset, see t
 
 ## Input-file style
 
-The runnable deck is [`inputs/h2o_mp2_6-31g.inp`](inputs/h2o_mp2_6-31g.inp) —
+The runnable deck is [`inputs/h2o_mp2_6-31g.oqp`](inputs/h2o_mp2_6-31g.oqp) —
 water in the 6-31G basis, a UHF reference, conventional MP2. Annotated:
 
-```ini
-[input]
-system=
- 8   0.000000000   0.000000000  -0.041061554   # O   (Angstrom)
- 1  -0.533194329   0.533194329  -0.614469223   # H
- 1   0.533194329  -0.533194329  -0.614469223   # H
-
-charge=0
-method=mp2              # select the MP2 post-SCF workflow
-basis=6-31g
-runtype=energy          # MP2 is energy-only; other runtypes are rejected
-functional=             # MUST be empty — MP2 needs an HF reference, not KS-DFT
-
-[guess]
-type=huckel             # extended-Huckel initial orbital guess
-save_mol=false
-
-[scf]
-type=uhf                # the HF reference: rhf | uhf | rohf
-multiplicity=1          # singlet ground state
-maxit=50                # max SCF iterations
-conv=1.0e-10            # tight SCF convergence (correlation is sensitive)
-save_molden=false
-
-[mp2]
-variant=mp2             # conventional (unscaled) MP2; c_ss = c_os = 1.0
+```text
+mp2(reference=uhf,variant=mp2)/6-31g      # model(reference,variant)/basis
+guess(type=huckel,save_mol=false)
+scf(maxit=50,conv=1e-10,save_molden=false)
+geom="""
+O   0.000000000   0.000000000  -0.041061554
+H  -0.533194329   0.533194329  -0.614469223
+H   0.533194329  -0.533194329  -0.614469223
+"""
 ```
 
 Key points:
 
-- **`method=mp2`** in `[input]` is what turns on the correlation step; **`functional`
-  must be empty** (MP2 on a Kohn-Sham reference is rejected) and **`runtype` must be
-  `energy`** (no MP2 gradients/Hessians yet).
-- The **HF reference is chosen in `[scf]`** via `type`. Water is closed-shell, so
-  `type=rhf` would be the natural choice and gives the identical energy here; this
-  example ships with `uhf` to exercise the unrestricted path. Use `rohf` (or `uhf`)
-  with the appropriate `multiplicity` for open-shell systems.
-- The **`[mp2]` section is optional**. Omit it entirely for conventional MP2, or set
-  `variant` to pick a spin-scaled preset. For spin-component scaling change one line:
+- **`mp2/6-31g`** is `model/basis` — MP2 takes **no functional component**, and the
+  route rejects one, because MP2 needs a Hartree-Fock reference rather than a
+  Kohn-Sham one. That whole class of mistake is unavailable rather than merely
+  discouraged.
+- **`reference=uhf`** picks the HF reference: `rhf`, `uhf`, or `rohf`. Water is
+  closed-shell, so `rhf` would be the natural choice and gives the identical energy
+  here; this example ships with `uhf` to exercise the unrestricted path. For an
+  open-shell system add `mult=3` (or whatever applies) as a top-level option.
+- **`variant`** selects the spin-scaling preset, and is optional — leave it out for
+  conventional MP2. To use spin-component scaling, change the one route option:
 
-  ```ini
-  [mp2]
-  variant=scs-mp2         # Grimme SCS-MP2: c_ss = 1/3, c_os = 1.2
+  ```text
+  mp2(reference=rhf,variant=scs-mp2)/6-31g    # Grimme SCS-MP2: c_ss = 1/3, c_os = 1.2
   ```
 
-  ```ini
-  [mp2]
-  variant=sos-mp2         # scaled-opposite-spin: c_ss = 0, c_os = 1.3
+  ```text
+  mp2(reference=rhf,variant=sos-mp2)/6-31g    # scaled-opposite-spin: c_ss = 0, c_os = 1.3
   ```
 
   Other accepted values include `os-mp2`, `ss-mp2`, `scs-mi-mp2`, and `custom`. For
   a literature parameterization not in the table, use `custom` with explicit scales:
 
-  ```ini
-  [mp2]
-  variant=custom
-  same_spin_scale=0.50
-  opposite_spin_scale=1.10
+  ```text
+  mp2(reference=rhf,variant=custom,same_spin_scale=0.50,opposite_spin_scale=1.10)/6-31g
   ```
+
+- **No driver line means `energy()`**. MP2 also has an analytic **ground-state**
+  gradient, but only on an **RHF** reference: `mp2/6-31g` + `grad` works, while
+  asking for a gradient on the `uhf` reference used here is rejected rather than
+  silently downgraded. Excited-state MP2 gradients do not exist.
+- **`scf(conv=1e-10)`** tightens the reference convergence — correlation energies
+  are sensitive to it — and **`guess(...)`/`scf(...)`** are exact calls into the
+  legacy `[guess]`/`[scf]` sections, the escape hatch for anything the concise
+  surface does not name.
 
 ## Python style
 
@@ -162,7 +150,7 @@ Input-file style (from the `inputs/` folder):
 
 ```bash
 cd mp2/inputs
-openqp h2o_mp2_6-31g.inp
+openqp h2o_mp2_6-31g.oqp
 ```
 
 Python style:

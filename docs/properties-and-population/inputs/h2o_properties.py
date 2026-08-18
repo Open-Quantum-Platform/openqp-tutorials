@@ -1,6 +1,6 @@
 """RHF/6-31G* single-point energy of water, with SCF population/moment analysis.
 
-Python-API equivalent of h2o_properties.inp: it requests the electric dipole and
+Python-API equivalent of h2o_properties.oqp: it requests the electric dipole and
 the Mulliken, Lowdin, and RESP atomic charges, then prints them.
 
 Run with:  python h2o_properties.py

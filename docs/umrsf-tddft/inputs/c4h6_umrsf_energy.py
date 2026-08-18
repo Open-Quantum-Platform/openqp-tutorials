@@ -1,6 +1,6 @@
 """UMRSF-TDDFT single-point excitation energies of butadiene (C4H6).
 
-Equivalent to c4h6_umrsf_energy.inp: BHHLYP / 6-31G*, energy only,
+Equivalent to c4h6_umrsf_energy.oqp: BHHLYP / 6-31G*, energy only,
 a UHF triplet reference with an unrestricted-MRSF (umrsf) response.
 
 The compact job.theory.mrsf(...) helper always sets an ROHF reference and
@@ -12,7 +12,7 @@ express calculations the model-specific helpers do not cover.
 
 from oqp.openqp import OpenQP
 
-# Butadiene geometry (Angstrom), same atoms/order as the .inp deck.
+# Butadiene geometry (Angstrom), same atoms/order as the .oqp deck.
 butadiene = """
 6   -1.901080641    0.114577198    0.000000000
 6   -0.574900598   -0.402237631    0.000000000

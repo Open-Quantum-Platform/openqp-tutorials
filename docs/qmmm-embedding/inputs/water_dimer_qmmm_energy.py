@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ESPF QM/MM single-point energy of a water dimer, via the OpenQP Python API.
 
-The exact same calculation as water_dimer_qmmm_energy.inp. The QM region is the
+The exact same calculation as water_dimer_qmmm_energy.oqp. The QM region is the
 first water (PDB atoms 0,1,2); the second water is MM (TIP3P point charges) and
 polarizes the QM density through the ESPF operator. Requires the optional OpenMM
 backend (pip install openmm). Run from this folder so the PDB / force-field

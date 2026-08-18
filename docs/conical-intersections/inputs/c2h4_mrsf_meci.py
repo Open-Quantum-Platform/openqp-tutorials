@@ -1,6 +1,6 @@
 """Minimum-energy conical intersection (MECI) of ethylene with MRSF-TDDFT.
 
-Python-API equivalent of c2h4_mrsf_meci.inp. It optimizes the twisted-pyramidal
+Python-API equivalent of c2h4_mrsf_meci.oqp. It optimizes the twisted-pyramidal
 S0/S1 crossing seam of ethylene using the native OpenQP optimizer and the
 penalty-function branching-plane search.
 

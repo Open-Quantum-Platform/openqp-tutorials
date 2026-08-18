@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """SOC-NAMD-QMMM of formaldehyde in water, via the OpenQP Python API.
 
-The exact same calculation as h2co-water_soc-namd-qmmm.inp, built with the
+The exact same calculation as h2co-water_soc-namd-qmmm.oqp, built with the
 compact `OpenQP` scripting interface. Run from this folder (so the PDB /
 force-field files resolve):  python h2co-water_soc-namd-qmmm.py
 """

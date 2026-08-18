@@ -1,0 +1,22 @@
+# =====================================================================
+#  SOC-NAMD-QMMM tutorial deck: formaldehyde in a small water cluster
+# =====================================================================
+#  QM  : formaldehyde (H2CO), MRSF-TDDFT/BHHLYP/6-31G* on a triplet
+#        ROHF reference (implied by the mrsf model).  Surface hopping
+#        runs on the SPIN-ADIABATIC manifold: ns singlets + 3*nt triplet
+#        Ms sublevels (= 2 + 3*2 = 8 states), so intersystem crossing
+#        (S<->T) is a hop like any other, driven by spin-orbit coupling.
+#  MM  : 5 TIP3P waters (OpenMM), coupled to the QM density by ESPF
+#        electrostatic embedding.  NoCutoff = isolated (non-periodic).
+#
+#  This is a MINIMAL demo (nstep=1: one nuclear step). Raise nstep for a
+#  real trajectory.  Needs the optional OpenMM backend; the companion
+#  files are read relative to this deck.
+# ---------------------------------------------------------------------
+mrsf(nstate=2)/bhhlyp/6-31g*
+geom="formaldehyde_water.pdb 0-3"
+namd(nstep=1,dt=0.25,active=5,substep=50,init_temp=300,velocity=maxwell,
+     seed=3,decoherence=edc,trivial=true,soc=true,thrshe=0.1)
+guess(type=huckel)
+qmmm(forcefield_files="formaldehyde.xml tip3p.xml",cutoff=NoCutoff,
+     embedding=electrostatic)

@@ -40,9 +40,7 @@ The runnable deck is [`inputs/h2o_mrsf.oqp`](inputs/h2o_mrsf.oqp) — water in t
 S1. Annotated:
 
 ```text
-mrsf(nstate=3)/bhhlyp/6-31g*     # model(options)/functional/basis
-grad(S1)                         # energy + analytic gradient of S1
-guess(type=huckel)               # extended-Huckel initial orbitals
+mrsf(nstate=3)/bhhlyp/6-31g* grad(S1)    # model(options)/functional/basis + gradient of S1
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223
@@ -62,14 +60,14 @@ Key points, line by line:
   state named **physically**. You never work out that S1 is internal response root
   2 — that mapping is the format's job. Use `energy(S0)` for energies only, or
   `opt(S1)` to optimize the S1 minimum.
-- **`guess(type=huckel)`** is an exact section call into the legacy `[guess]`
-  section — the escape hatch for anything the concise surface does not name.
 - **`geom`** holds the molecule inline; `geom="water.xyz"` reads it from a file
   instead.
 
 Everything else — `method=tdhf`, `[tdhf] type=mrsf`, `[scf] type=rohf`,
-`[scf] multiplicity=3`, `[properties] grad=2` — is implied by the two lines above
-and is filled in for you.
+`[scf] multiplicity=3`, `[properties] grad=2`, the Huckel initial guess, the SCF
+thresholds — is implied by that one line or is a default, and is filled in for
+you. Exact section calls such as `scf(conv=1e-8)` are the escape hatch when a
+default is not what you want.
 
 ## Python style
 

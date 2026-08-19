@@ -43,7 +43,6 @@ The whole calculation is four lines:
 
 ```text
 rhf/6-31g*
-guess(type=huckel)
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223
@@ -61,19 +60,20 @@ Key points:
   `rks/bhhlyp/6-31g*`. That third component is exactly what turns the SCF into
   Kohn-Sham DFT; `uks` and `roks` are the unrestricted and restricted-open-shell
   Kohn-Sham models.
-- **No driver line means `energy()`** — a single-point energy. To get forces, add
-  a driver line:
+- **No driver keyword means `energy()`** — a single-point energy. To get forces,
+  add the driver after the route:
 
   ```text
-  grad
+  rhf/6-31g* grad
   ```
 
   (`grad(S0)` if you prefer to name the state explicitly; for a ground-state model
   they mean the same thing.)
-- **`guess(type=huckel)`** is an *exact section call*: it sets `type` in the
-  legacy `[guess]` section, seeding the SCF with cheap extended-Huckel orbitals.
-  Anything the concise surface does not name has this escape hatch — for example
-  `scf(conv=1e-10)` or `scf(stability=true)` for a UHF reference.
+- **Everything else is a default** — the extended-Huckel starting orbitals, the
+  SCF thresholds, the grid — and is not written. Anything the concise surface
+  does not name has an *exact section call* as its escape hatch, for example
+  `scf(conv=1e-10)`, `scf(stability=true)` for a UHF reference, or
+  `guess(type=hcore)` for a different starting guess.
 - **`geom`** takes either an inline coordinate block in triple quotes, as here, or
   a path: `geom="water.xyz"`. Element symbols and atomic numbers are both fine.
 

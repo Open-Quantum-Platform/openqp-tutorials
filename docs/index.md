@@ -41,9 +41,16 @@ python <tutorial>/inputs/<deck>.py      # Python-API style
 ## The `.oqp` input format
 
 Every deck in this book is written in OpenQP's concise `.oqp` format. A deck is
-built from four kinds of line:
+built from four kinds of item — the route, the driver, and any options on one
+line, followed by the geometry — and it says only what differs from the
+defaults:
 
-| Line | Example | What it does |
+```text
+mrsf(nstate=3)/bhhlyp/6-31g* grad(S1)
+geom="h2o.xyz"
+```
+
+| Item | Example | What it does |
 | --- | --- | --- |
 | **route** (always first) | `mrsf(nstate=3)/bhhlyp/6-31g*` | names the physical model, the functional, and the basis. Model options go in parentheses. |
 | **driver** (at most one) | `grad(S1)` | names the calculation and its target state. `energy()` is the default. |

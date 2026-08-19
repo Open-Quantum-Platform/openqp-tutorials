@@ -45,9 +45,7 @@ in the minimal STO-3G basis, a closed-shell RHF reference, GIAO shielding.
 Annotated:
 
 ```text
-rhf/sto-3g                # Hartree-Fock reference (not KS-DFT here)
-nmr(gauge=giao)           # request the shielding tensor; giao | cgo
-guess(type=huckel)        # extended-Huckel initial orbitals
+rhf/sto-3g nmr            # Hartree-Fock reference + the shielding tensor (GIAO)
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223
@@ -62,9 +60,8 @@ Key points:
   converged wavefunction afterwards, so no special run type is needed.
 - **`nmr(...)` is what turns the shielding on.** It is a *modifier*, not a driver:
   it rides along with whatever calculation the deck is already doing. Written bare
-  as `nmr`, it uses the gauge-origin-independent default; `gauge=` names the scheme
-  explicitly. To switch from London orbitals to a common gauge origin, change the
-  one argument:
+  as `nmr`, it uses the gauge-origin-independent GIAO default, so nothing else is
+  needed. To switch from London orbitals to a common gauge origin, name the scheme:
 
   ```text
   nmr(gauge=cgo)          # common gauge origin instead of GIAO
@@ -73,7 +70,6 @@ Key points:
 - **The reference is a closed-shell singlet**, which `rhf` implies. For an
   open-shell molecule use `uhf`/`rohf` with a `mult=` line; for a DFT density,
   add a functional component (`rks/b3lyp5/sto-3g`).
-- **`guess(type=huckel)`** is an exact call into the legacy `[guess]` section.
 
 ## Python style
 

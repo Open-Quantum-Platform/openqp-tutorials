@@ -7,7 +7,5 @@
 #
 # The geometry is the PDB plus the 0-based QM atom selection; qmmm(...) both
 # turns QM/MM on and carries the MM settings.
-rks/bhhlyp/6-31g*
+rks/bhhlyp/6-31g* qmmm(forcefield_files="tip3p.xml")
 geom="water_dimer.pdb 0 1 2"
-energy()
-qmmm(forcefield_files=tip3p.xml,cutoff=NoCutoff,embedding=electrostatic)

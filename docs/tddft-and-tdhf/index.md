@@ -44,7 +44,6 @@ Annotated:
 
 ```text
 tddft(nstate=3)/b3lyp5/6-31g*    # model(roots)/functional/basis
-guess(type=huckel)               # extended-Huckel initial orbitals
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223
@@ -66,7 +65,6 @@ Key points:
   the S1 surface.
 - The **reference is a closed-shell singlet**, which is what `tddft` implies. For
   an open-shell reference add `mult=3`; the model then builds on a UHF reference.
-- **`guess(type=huckel)`** is an exact call into the legacy `[guess]` section.
 
 ## Python style
 

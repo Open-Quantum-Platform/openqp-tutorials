@@ -121,7 +121,7 @@ If OpenMM is missing, QM/MM decks are reported **SKIPPED** rather than run.
 ## 4. The input, line by line
 
 Open [`inputs/h2co-water_soc-namd-qmmm.oqp`](inputs/h2co-water_soc-namd-qmmm.oqp).
-It is four lines plus a geometry. Here is what each one is doing.
+It is three lines including the geometry. Here is what each one is doing.
 
 ### The route — the QM electronic model
 
@@ -157,9 +157,11 @@ thing three times (an inline `system` block, `[qmmm] pdb_file`, and
 This is the heart of a NAMD run.
 
 ```text
-namd(nstep=1,dt=0.25,active=5,substep=50,init_temp=300,velocity=maxwell,
-     seed=3,decoherence=edc,trivial=true,soc=true,thrshe=0.1)
+namd(nstep=1,dt=0.25,active=5,substep=50,seed=3,trivial=true,soc=true)
 ```
+
+It shares the first line with the route in the deck. Only what differs from
+the defaults is written:
 
 | option | meaning |
 | --- | --- |
@@ -167,12 +169,14 @@ namd(nstep=1,dt=0.25,active=5,substep=50,init_temp=300,velocity=maxwell,
 | `dt=0.25` | nuclear time step (fs) |
 | `active=5` | initially populated spin-adiabatic state |
 | `substep=50` | electronic sub-steps per nuclear step |
-| `init_temp=300` / `velocity=maxwell` | sample initial velocities at 300 K |
 | `seed=3` | fixed RNG seed → reproducible hops |
-| `decoherence=edc` | energy-based decoherence (Granucci-Persico 2007) |
 | `trivial=true` | detect trivial (weakly-avoided) crossings |
 | `soc=true` | spin-orbit coupling ON → allows ISC |
-| `thrshe=0.1` | gap gate: suppress spurious hops to S₀ |
+
+Already the defaults, and therefore not written: initial velocities sampled
+from a Maxwell distribution at 300 K (`init_temp=300`, `velocity=maxwell`),
+energy-based decoherence (`decoherence=edc`, Granucci-Persico 2007), and the
+`thrshe=0.1` Hartree gap gate.
 
 Key ideas:
 
@@ -185,38 +189,34 @@ Key ideas:
 - **`substep`** matters because the electronic amplitude oscillates much faster
   than the nuclei move; the time-derivative couplings are integrated on this finer
   grid between nuclear steps.
-- **`decoherence=edc`** corrects a well-known FSSH pathology (over-coherence) so
-  populations relax physically. **`trivial=true`** stops the trajectory from
-  missing a hop at a very sharp, weakly-avoided crossing.
+- **`decoherence=edc`** (the default) corrects a well-known FSSH pathology
+  (over-coherence) so populations relax physically. **`trivial=true`** stops the
+  trajectory from missing a hop at a very sharp, weakly-avoided crossing.
 - **`soc=true`** is the switch that turns *NAMD* into *SOC-NAMD*: without it you
   get internal conversion only; with it, singlet↔triplet ISC is possible.
-- **`thrshe`** is a safety gate: near the Franck-Condon point the default would
-  permit unphysical hops down to S₀; `0.1` Hartree is the recommended value.
+- **`thrshe`** is a safety gate: near the Franck-Condon point unrestricted
+  hopping would permit unphysical hops down to S₀; the default `0.1` Hartree is
+  the recommended value.
 
 ### `qmmm(...)` — the environment
 
 ```text
-qmmm(forcefield_files="formaldehyde.xml tip3p.xml",cutoff=NoCutoff,
-     embedding=electrostatic)
+qmmm(forcefield_files="formaldehyde.xml tip3p.xml")
 ```
 
 Supplying `qmmm(...)` is itself what turns QM/MM on; the PDB named in `geom` is
 propagated into the section for you. The MM atoms are parameterized by the
 `forcefield_files`. `formaldehyde.xml` only needs to supply the QM atoms'
 Lennard-Jones parameters — their electrostatics come from ESPF, not from fixed MM
-charges. `cutoff=NoCutoff` is for an isolated cluster; for a **solvated periodic
-box** you would use `cutoff=PME`, which turns on the particle-mesh-Ewald branch of
-the embedding. `embedding=electrostatic` selects full ESPF coupling.
+charges. The defaults suit this isolated cluster: `cutoff=NoCutoff` and full
+ESPF coupling (`embedding=electrostatic`). For a **solvated periodic box** you
+would add `cutoff=PME`, which turns on the particle-mesh-Ewald branch of the
+embedding.
 
-### `guess(...)` — starting orbitals
-
-```text
-guess(type=huckel)
-```
-
-An exact call into the legacy `[guess]` section, seeding the ROHF with cheap
-extended-Huckel orbitals. This is the escape hatch the format keeps for every
-control it does not name directly.
+Everything not written — the extended-Huckel starting orbitals, the SCF
+thresholds, the XC grid — is a default. Exact section calls such as
+`scf(conv=1e-8)` remain the escape hatch for every control the format does not
+name directly.
 
 > The QM region here is a *whole molecule*. Cutting a covalent bond (carving a
 > fragment out of a larger molecule) is a **covalent boundary** — supported by the

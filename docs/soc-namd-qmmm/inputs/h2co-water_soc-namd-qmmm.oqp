@@ -13,10 +13,6 @@
 #  real trajectory.  Needs the optional OpenMM backend; the companion
 #  files are read relative to this deck.
 # ---------------------------------------------------------------------
-mrsf(nstate=2)/bhhlyp/6-31g*
+mrsf(nstate=2)/bhhlyp/6-31g* namd(nstep=1,dt=0.25,active=5,substep=50,seed=3,trivial=true,soc=true)
+qmmm(forcefield_files="formaldehyde.xml tip3p.xml")
 geom="formaldehyde_water.pdb 0-3"
-namd(nstep=1,dt=0.25,active=5,substep=50,init_temp=300,velocity=maxwell,
-     seed=3,decoherence=edc,trivial=true,soc=true,thrshe=0.1)
-guess(type=huckel)
-qmmm(forcefield_files="formaldehyde.xml tip3p.xml",cutoff=NoCutoff,
-     embedding=electrostatic)

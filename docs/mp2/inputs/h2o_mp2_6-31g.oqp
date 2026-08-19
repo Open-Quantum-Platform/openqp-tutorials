@@ -1,8 +1,6 @@
 # MP2/6-31G correlation energy of water on a UHF reference.
 # The reference and the spin-scaling variant are route options of the model.
-mp2(reference=uhf,variant=mp2)/6-31g
-guess(type=huckel,save_mol=false)
-scf(maxit=50,conv=1e-10,save_molden=false)
+mp2(reference=uhf)/6-31g scf(conv=1e-10)
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223

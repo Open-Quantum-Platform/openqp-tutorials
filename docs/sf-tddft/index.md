@@ -46,9 +46,7 @@ The runnable deck is [`inputs/h2o_sf-tddft.oqp`](inputs/h2o_sf-tddft.oqp) — wa
 in the 6-31G\* basis, BHHLYP, energy **and** gradient of an SF root. Annotated:
 
 ```text
-sf(nstate=3)/bhhlyp/6-31g*       # model(roots)/functional/basis
-grad(root=3)                     # energy + analytic gradient of SF root 3
-guess(type=huckel)               # extended-Huckel initial orbitals
+sf(nstate=3)/bhhlyp/6-31g* grad(root=3)    # model(roots)/functional/basis + gradient of SF root 3
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223
@@ -68,7 +66,6 @@ Key points:
   physical labels are not known in advance and there is no honest `S1` to write.
   `root=1` is the lowest (multiconfigurational ground) state, so `root=3` is the
   gradient of the second excited SF root. Use `energy()` for energies only.
-- **`guess(type=huckel)`** is an exact call into the legacy `[guess]` section.
 
 This is the one place the format asks for an implementation index instead of a
 physical label — and it does so because the physics, not the interface, is what

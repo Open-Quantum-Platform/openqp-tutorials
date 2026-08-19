@@ -40,10 +40,8 @@ The runnable deck is [`inputs/h2o_soc.oqp`](inputs/h2o_soc.oqp) — water in the
 manifold. Annotated:
 
 ```text
-mrsf(nstate=12)/bhhlyp/6-31g(2df,p)          # 12 MRSF response roots
-ispher=false                                 # Cartesian AOs: required by 2e SOC
-soc(soc_2e=1)                                # 1e Breit-Pauli + mean-field 2e SOC
-scf(scal_rel=2,converger_type=diis,maxit=200)
+mrsf(nstate=12)/bhhlyp/6-31g(2df,p) ispher=false soc   # 12 MRSF roots, Cartesian AOs, SOC driver
+scf(scal_rel=2,maxit=200)                               # DKH2 scalar relativity; raised iteration cap
 geom="""
 O    0.000000000000   0.000000000000   0.000000000000
 H    0.772597940000   0.555677850000   0.000000000000
@@ -62,16 +60,16 @@ Key points:
   triplets. `nstate=12` requests twelve response roots; from these the SOC workflow
   forms the singlet and triplet states internally and couples them, so you do not
   enumerate the spin blocks yourself.
-- **`soc_2e=1`** turns on the mean-field two-electron SOC on top of the
-  one-electron Breit-Pauli term. Because that path is built over Cartesian
-  Gaussians, it **requires `ispher=false`**; set `soc_2e=0` if you only want the
-  one-electron term. To size the singlet and triplet blocks independently, drop
+- **The mean-field two-electron SOC is on by default** (`soc_2e=1`) on top of
+  the one-electron Breit-Pauli term. Because that path is built over Cartesian
+  Gaussians, it **requires `ispher=false`**; write `soc(soc_2e=0)` if you only
+  want the one-electron term. To size the singlet and triplet blocks independently, drop
   `nstate` from the route and give `soc(ns=...,nt=...)` instead — asking for both
   at once is rejected rather than silently resolved.
 - **`scf(scal_rel=2)`** applies the second-order DKH scalar-relativistic correction
-  to the core (`scal_rel=1` is first-order only; `0` turns it off), alongside the
-  DIIS accelerator and a raised iteration cap. These are `[scf]` controls, so they
-  travel in an exact section call rather than the route.
+  to the core (`scal_rel=1` is first-order only; `0` turns it off), alongside a
+  raised iteration cap. These are `[scf]` controls, so they travel in an exact
+  section call rather than the route.
 - **A basis name may contain parentheses and commas** — `6-31g(2df,p)` parses as
   one route component, because the route is split only at top level.
 

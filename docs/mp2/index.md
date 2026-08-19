@@ -48,9 +48,8 @@ The runnable deck is [`inputs/h2o_mp2_6-31g.oqp`](inputs/h2o_mp2_6-31g.oqp) —
 water in the 6-31G basis, a UHF reference, conventional MP2. Annotated:
 
 ```text
-mp2(reference=uhf,variant=mp2)/6-31g      # model(reference,variant)/basis
-guess(type=huckel,save_mol=false)
-scf(maxit=50,conv=1e-10,save_molden=false)
+mp2(reference=uhf)/6-31g      # model(reference)/basis
+scf(conv=1e-10)               # tight SCF so the correlation energy is clean
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223
@@ -68,8 +67,9 @@ Key points:
   closed-shell, so `rhf` would be the natural choice and gives the identical energy
   here; this example ships with `uhf` to exercise the unrestricted path. For an
   open-shell system add `mult=3` (or whatever applies) as a top-level option.
-- **`variant`** selects the spin-scaling preset, and is optional — leave it out for
-  conventional MP2. To use spin-component scaling, change the one route option:
+- **`variant`** selects the spin-scaling preset; conventional MP2 is the default,
+  so it is not written here. To use spin-component scaling, add the one route
+  option:
 
   ```text
   mp2(reference=rhf,variant=scs-mp2)/6-31g    # Grimme SCS-MP2: c_ss = 1/3, c_os = 1.2
@@ -91,9 +91,10 @@ Key points:
   asking for a gradient on the `uhf` reference used here is rejected rather than
   silently downgraded. Excited-state MP2 gradients do not exist.
 - **`scf(conv=1e-10)`** tightens the reference convergence — correlation energies
-  are sensitive to it — and **`guess(...)`/`scf(...)`** are exact calls into the
-  legacy `[guess]`/`[scf]` sections, the escape hatch for anything the concise
-  surface does not name.
+  are sensitive to it. `scf(...)` is an exact call into the legacy `[scf]`
+  section, the escape hatch for anything the concise surface does not name; the
+  initial guess, iteration cap, and so on stay at their defaults and are not
+  written.
 
 ## Python style
 

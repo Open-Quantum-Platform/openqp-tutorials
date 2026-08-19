@@ -2,7 +2,6 @@
 # The route names the response model directly: tddft(nstate=3) solves three
 # roots.  Drop the functional component (tdhf/6-31g*) to get plain TDHF.
 tddft(nstate=3)/b3lyp5/6-31g*
-guess(type=huckel)
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223

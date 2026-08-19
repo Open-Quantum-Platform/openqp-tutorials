@@ -1,9 +1,7 @@
 # BHHLYP/aug-cc-pVDZ-PP(Br), aug-cc-pVDZ(H) energy of HBr, using an ECP on Br.
 # The "-PP" basis carries an effective core potential for bromine's core;
 # the light H atom keeps an all-electron basis. OpenQP builds the ECP via libecpint.
-rks/bhhlyp/aug-cc-pvdz-pp;aug-cc-pvdz
-guess(type=huckel,save_mol=false)
-dftgrid(rad_type=becke)
+rks/bhhlyp/aug-cc-pvdz-pp;aug-cc-pvdz dftgrid(rad_type=becke)
 geom="""
 Br   0.000000000   0.000000000   0.000000000
 H    0.000000000   0.000000000   1.407611000

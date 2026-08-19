@@ -48,10 +48,8 @@ The QM region is the **first** water (PDB atoms 0, 1, 2); the **second** water i
 MM and polarizes the QM density through ESPF. Annotated:
 
 ```text
-rks/bhhlyp/6-31g*                   # QM level of theory (Kohn-Sham, BHHLYP)
+rks/bhhlyp/6-31g* qmmm(forcefield_files="tip3p.xml")   # QM level of theory + the MM force field
 geom="water_dimer.pdb 0 1 2"        # PDB path + 0-based indices of the QM atoms
-energy()                            # single-point energy (+ requested properties)
-qmmm(forcefield_files=tip3p.xml,cutoff=NoCutoff,embedding=electrostatic)
 ```
 
 Key points:
@@ -69,9 +67,11 @@ Key points:
   exists for turning QM/MM on with defaults, but combining it with `qmmm(...)` is
   rejected as saying the same thing twice.)
 - Inside the call, `forcefield_files` parameterizes the MM atoms (the QM atoms'
-  electrostatics come from ESPF, not from fixed MM charges); `cutoff=NoCutoff`
-  says isolated cluster; `embedding=electrostatic` selects the full ESPF
-  electrostatic coupling (as opposed to a cheaper mechanical embedding).
+  electrostatics come from ESPF, not from fixed MM charges). The defaults —
+  `cutoff=NoCutoff` (isolated cluster) and `embedding=electrostatic` (full ESPF
+  electrostatic coupling, as opposed to a cheaper mechanical embedding) — are
+  what this cluster needs, so they are not written.
+- **No driver keyword means a single-point energy.**
 
 ## Python style
 

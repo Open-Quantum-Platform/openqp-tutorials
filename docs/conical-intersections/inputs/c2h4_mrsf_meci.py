@@ -1,8 +1,8 @@
 """Minimum-energy conical intersection (MECI) of ethylene with MRSF-TDDFT.
 
 Python-API equivalent of c2h4_mrsf_meci.oqp. It optimizes the twisted-pyramidal
-S0/S1 crossing seam of ethylene using the native OpenQP optimizer and the
-penalty-function branching-plane search.
+S0/S1 crossing seam of ethylene using the native OpenQP optimizer and its
+default augmented-Lagrangian crossing search.
 
 Run with:  python c2h4_mrsf_meci.py
 """
@@ -30,26 +30,11 @@ job.molecule(geometry, charge=0)
 # State 1 is the (multiconfigurational) ground state S0, state 2 is S1.
 job.theory.mrsf(functional="bhhlyp", basis="6-31g*", nstate=5)
 
-# Crossing-point search between state 1 (S0) and state 2 (S1).
-# lib="oqp" selects the native optimizer; coordsys/trust are routed to [oqp].
-# The remaining keys are [optimize] convergence controls; energy_gap is the
-# S0-S1 degeneracy target that makes this an MECI rather than a minimum.
-job.workflow.meci(
-    lib="oqp",
-    istate=1,
-    jstate=2,
-    meci_search="penalty",
-    pen_sigma=2.0,
-    pen_incre=1.2,
-    energy_gap=2e-3,
-    rmsd_grad=2e-3,
-    max_grad=4e-3,
-    rmsd_step=4e-3,
-    max_step=8e-3,
-    maxit=30,
-    coordsys="auto",
-    trust=0.15,
-)
+# Crossing-point search between state 1 (S0) and state 2 (S1).  The native
+# optimizer, its default augmented-Lagrangian algorithm, and the default
+# convergence thresholds are used; pass e.g. meci_search="penalty" or
+# energy_gap=2e-3 only to change one of them.
+job.workflow.meci(istate=1, jstate=2)
 
 mol = job.run()
 

@@ -37,8 +37,7 @@ BHHLYP/6-31G\* Kohn-Sham level, taking an analytical ground-state Hessian.
 Annotated:
 
 ```text
-rks/bhhlyp/6-31g*                     # restricted Kohn-Sham, BHHLYP, 6-31G*
-hess(S0,type=analytical,clean=true)   # Hessian of the ground state
+rks/bhhlyp/6-31g* hess(S0,type=analytical,clean=true)   # BHHLYP/6-31G* + Hessian of the ground state
 geom="""
 O  -0.0000000000   0.0000000000  -0.0410615540
 H  -0.5331943294   0.5331943294  -0.6144692230

@@ -1,9 +1,7 @@
 # MRSF-TDDFT excited states + gradient, BHHLYP/6-31G* on water.
 # Computes 3 MRSF states (S0, S1, S2) and the analytic gradient of S1.
 # The triplet ROHF reference MRSF spin-flips from is implied by the model.
-mrsf(nstate=3)/bhhlyp/6-31g*
-grad(S1)
-guess(type=huckel)
+mrsf(nstate=3)/bhhlyp/6-31g* grad(S1)
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223

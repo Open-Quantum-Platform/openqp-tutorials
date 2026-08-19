@@ -46,10 +46,8 @@ converger starting from a **Hückel** guess. Annotated:
 
 ```text
 rks/pbe/6-31g                              # restricted Kohn-Sham, PBE, 6-31G
-d4=false                                   # no DFT-D4 dispersion correction
-guess(type=huckel,save_mol=true)           # where the SCF starts
-scf(converger_type=soscf,maxit=60,conv=1e-6)   # how it gets there
-dftgrid(rad_npts=96,ang_npts=302,pruned="")    # the XC quadrature grid
+guess(save_mol=true)                       # keep the converged orbitals for restarts
+scf(converger_type=soscf,maxit=60)         # how the SCF gets there
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223
@@ -63,30 +61,31 @@ Key points:
   functional; `rhf/6-31g` — no functional at all — would give a Hartree-Fock
   reference. `uks` and `roks` are the unrestricted and restricted-open-shell
   Kohn-Sham models.
-- **`guess(...)` chooses where the SCF starts.** `type=huckel` is the robust
-  default; switching to `hcore`, `sap`, or `minao` changes only the starting
-  orbitals, not the final answer, but can change how many iterations (and whether)
-  you converge. `save_mol=true` writes the converged orbitals so a later run can
-  restart from them.
+- **`guess(...)` chooses where the SCF starts.** The extended-Huckel guess is the
+  default and is not written; `guess(type=hcore)`, `sap`, or `minao` changes only
+  the starting orbitals, not the final answer, but can change how many iterations
+  (and whether) you converge. `save_mol=true` writes the converged orbitals so a
+  later run can restart from them.
 - **`scf(converger_type=...)` chooses how it gets there.** This deck uses `soscf`.
   Change one option to switch strategy:
 
   ```text
-  scf(converger_type=diis,maxit=60,conv=1e-6)     # default first-order DIIS extrapolation
+  scf(maxit=60)                            # default first-order DIIS extrapolation
   ```
 
   ```text
-  scf(converger_type=trah,maxit=60,conv=1e-6)     # trust-region augmented-Hessian: for hard, stalling cases
+  scf(converger_type=trah,maxit=60)        # trust-region augmented-Hessian: for hard, stalling cases
   ```
 
   All three converge this easy water case to the same energy; the difference shows
   up on difficult references, where `diis` may stall and `trah` still converges.
 - **`maxit` and `conv` are the stopping rules.** Raise `maxit` (here 60, above the
-  default of 30) for slow cases; tighten `conv` (e.g. `1e-8`) when you need
-  high-precision energies or gradients.
-- **`dftgrid(...)` sets the XC integration grid.** `rad_npts` × `ang_npts` is a fine
-  (96, 302) grid; a coarse grid can itself cause the SCF energy to jitter and fail
-  to converge, so grid quality and SCF convergence are linked.
+  default of 30) for slow cases; add `conv=1e-8` when you need high-precision
+  energies or gradients (the default is `1e-6`).
+- **`dftgrid(...)` sets the XC integration grid.** The default (96 radial × 302
+  angular points, SG2 pruning) is fine; a coarse grid can itself cause the SCF
+  energy to jitter and fail to converge, so grid quality and SCF convergence are
+  linked.
 
 Note the shape of the deck: the route line says *what physics*, and everything
 that follows is a named knob on one legacy section. Convergence controls are

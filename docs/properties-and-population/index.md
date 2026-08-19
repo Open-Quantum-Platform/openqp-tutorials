@@ -45,10 +45,7 @@ water in the 6-31G\* basis, a closed-shell RHF reference, with all four property
 analyses switched on. Annotated:
 
 ```text
-rhf/6-31g*                                            # HF reference (no functional -> pure HF)
-energy()                                              # single-point; properties ride on top
-guess(type=huckel)                                    # extended-Huckel initial orbitals
-properties(scf_prop="el_mom,mulliken,lowdin,resp")    # the opt-in analyses to run
+rhf/6-31g* properties(scf_prop="el_mom,mulliken,lowdin,resp")
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223
@@ -75,9 +72,10 @@ Key points:
   you would change the model token and add `mult=`. Because there is no functional
   component this is pure Hartree-Fock; use `rks/b3lyp5/6-31g*` to run the identical
   property analysis on a DFT density instead.
-- **`energy()`** is written out here for clarity, but it is also the default: these
-  are ground-state SCF properties evaluated at the input geometry, so no gradient
-  is needed.
+- **There is no driver keyword** because a single-point energy is the default:
+  these are ground-state SCF properties evaluated at the input geometry, so no
+  gradient is needed. The initial guess, SCF thresholds, and grid likewise stay at
+  their defaults and are not written.
 
 ## Python style
 

@@ -2,9 +2,7 @@
 # A high-spin (triplet) ROHF reference is spin-flipped down to reach the
 # singlet manifold; the sf model implies that reference.  SF roots are not
 # spin-adapted before diagonalization, so the target is given as root=N.
-sf(nstate=3)/bhhlyp/6-31g*
-grad(root=3)
-guess(type=huckel)
+sf(nstate=3)/bhhlyp/6-31g* grad(root=3)
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223

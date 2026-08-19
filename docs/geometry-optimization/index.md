@@ -44,8 +44,7 @@ Python API and from legacy `.inp` decks. For the full contract see the
 The first deck relaxes water to its nearest minimum. Annotated:
 
 ```text
-rks/bhhlyp/6-31g*                # BHHLYP Kohn-Sham energy and gradient
-opt(coordsys=tric,trust=0.2)     # relax to the nearest MINIMUM
+rks/bhhlyp/6-31g* opt            # BHHLYP Kohn-Sham gradients; relax to the nearest MINIMUM
 geom="""
 O  -0.0000000000   0.0000000000  -0.0410615540
 H  -0.5331943294   0.5331943294  -0.6144692230
@@ -61,13 +60,12 @@ Line by line:
 - **`opt(...)` is the driver**, and it is what turns a single point into a
   **minimization**. With a ground-state model there is no state to name; on a
   response route you would write `opt(S1)` to relax on an excited surface.
-- **`coordsys=tric` and `trust=0.2`** are options of that driver: step in
-  translation-rotation internal coordinates, with a trust radius (maximum step)
-  of 0.2. The concise format always uses the **native OpenQP optimizer**, so
-  there is no backend to select and no separate backend section — the step
-  controls sit directly on the driver.
-- **`maxit`** caps the geometry cycles; it is omitted here because 30 is already
-  the default.
+- **Nothing else is needed.** The concise format always uses the **native OpenQP
+  optimizer**, so there is no backend to select and no separate backend section.
+  Its step controls are options of the driver and default to sensible values —
+  an automatic internal-coordinate choice (`coordsys=auto`, which starts in DLC),
+  a trust radius (maximum step) of 0.2, and at most 30 cycles. Write one only to
+  change it, for example `opt(coordsys=tric,trust=0.1,maxit=60)`.
 
 ### Transition state: HCN → HNC (`inputs/hcn_ts.oqp`)
 
@@ -76,9 +74,7 @@ isomerization. The only structural difference from a minimization is the driver
 name.
 
 ```text
-rks/bhhlyp/3-21g                        # small, fast basis for the demo
-ts(S0,maxit=50,coordsys=dlc,trust=0.05) # search for a first-order SADDLE POINT
-scf(maxit=30)                           # max SCF iterations per point
+rks/bhhlyp/3-21g ts(S0,maxit=50,coordsys=dlc,trust=0.05)  # small basis; first-order SADDLE-POINT search
 geom="""
 C   0.0000000000   0.0000000000   0.0000000000
 N   0.0000000000   0.0000000000   1.1700000000
@@ -96,7 +92,6 @@ What changes relative to the water minimization:
   easy to overshoot.
 - **`maxit=50`** — saddle points usually take more cycles than minima, so the
   ceiling is raised above the default 30.
-- **`scf(maxit=30)`** is an exact section call bounding the SCF at each geometry.
 
 `ts(...)` also takes `follow` (which mode to follow uphill) and `hessian`
 (how to seed the initial Hessian); see the manual for the full list.
@@ -137,18 +132,9 @@ H   0.5331943294  -0.5331943294  -0.6144692230
 # BHHLYP Kohn-Sham reference with the 6-31g* basis, matching the deck's route.
 job.theory.dft(functional="bhhlyp", basis="6-31g*", reference="rhf")
 
-# Geometry optimization on the native optimizer.
-#   lib="oqp"      -> [optimize] lib=oqp   (native backend)
-#   istate=0       -> [optimize] istate=0  (ground state)
-#   maxit=30       -> [optimize] maxit=30
-#   coordsys/trust -> routed to the [oqp] backend section automatically
-job.workflow.optimize(
-    lib="oqp",
-    istate=0,
-    maxit=30,
-    coordsys="tric",
-    trust=0.2,
-)
+# Geometry optimization on the native optimizer, matching the deck's bare `opt`.
+#   istate=0 -> [optimize] istate=0 (ground state); everything else is a default
+job.workflow.optimize(istate=0)
 
 mol = job.run()
 
@@ -158,9 +144,10 @@ print("Optimized geometry (Bohr):", mol.get_system())
 print(mol.get_results())
 ```
 
-The key mapping: `job.workflow.optimize(...)` is `runtype=optimize`; `lib`,
-`istate`, and `maxit` fill `[optimize]`; and because `lib="oqp"`, `coordsys` and
-`trust` are dispatched to the `[oqp]` section for you.
+The key mapping: `job.workflow.optimize(...)` is `runtype=optimize` and `istate`
+fills `[optimize]`. Optional `lib`, `maxit`, `coordsys`, and `trust` arguments
+map the same way as the `.oqp` options — `lib`/`maxit` to `[optimize]`, and with
+the native backend `coordsys`/`trust` to the `[oqp]` section for you.
 
 ### Transition state: `inputs/hcn_ts.py`
 

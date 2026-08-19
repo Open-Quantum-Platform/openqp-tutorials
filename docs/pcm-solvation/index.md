@@ -37,10 +37,7 @@ is an ordinary RHF single point with one extra call — `pcm(...)` — that swit
 on the reaction field.
 
 ```text
-rhf/6-31g*                              # RHF reference (Kohn-Sham DFT also allowed)
-guess(type=huckel,save_mol=false)       # Huckel start; no restart file left behind
-scf(conv=1e-6)                          # the recommended SCF gate for this path
-pcm(enabled=true,backend=ddx,mode=reference_scf,model=ddpcm,epsilon=78.3553)
+rhf/6-31g* pcm                          # RHF reference in a ddPCM water continuum
 geom="""
 O   0.000000000   0.000000000  -0.041061554
 H  -0.533194329   0.533194329  -0.614469223
@@ -54,19 +51,17 @@ Line by line:
   Use `rhf` (closed shell) or `rohf` (open shell); **UHF is rejected**. There is no
   driver line, so the deck runs `energy()` — PCM/ddX is a single-point energy path,
   and `grad`/`opt` are outside its current scope.
-- **`guess(...)`** seeds the SCF with Huckel orbitals; `save_mol=false` keeps the
-  demo from leaving a restart file.
-- **`scf(conv=1e-6)`** is the deliberate SCF threshold for this energy-only
+- **`pcm`** turns the reaction field on. Written bare it uses the defaults —
+  the ddX backend coupled to the reference SCF, the `ddpcm` model, and water
+  (`epsilon=78.3553`) — which is the supported combination (energy driver,
+  RHF/ROHF reference) the input checker enforces. Write options only to change
+  them, for example `pcm(model=ddcosmo,epsilon=4.8)`; `ddlpb` is the third
+  model, `solvent` a readable label, and `radii` the cavity-radii model
+  (default `uff`).
+- The default SCF threshold (`conv=1e-6`) is the right one for this energy-only
   coupling — the shipped examples note that a tighter 1e-8 gate is unreachable
   because the provisional coupling omits one small (~1e-7) Fock term, and 1e-6
   already reproduces the reference energy well within tolerance.
-- **`pcm(...)`** carries the solvation controls, as an exact call into the legacy
-  `[pcm]` section. `enabled=true` activates it; `backend=ddx` + `mode=reference_scf`
-  + an energy driver + an RHF/ROHF reference is the supported combination the input
-  checker enforces. `model` picks the continuum flavor (swap in `ddcosmo` or
-  `ddlpb`), and `epsilon` sets the solvent's dielectric constant. Optional keys not
-  shown here: `solvent` (a readable label), `radii` (cavity-radii model, default
-  `uff`). Written bare as `pcm`, it turns the reaction field on with the defaults.
 
 > **Note on `ispher`.** The reference deck in the OpenQP repo sets `ispher=true`
 > to exercise spherical-harmonic AOs, but the docs state `ispher` is normally

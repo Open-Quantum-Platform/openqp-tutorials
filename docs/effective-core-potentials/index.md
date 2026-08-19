@@ -44,7 +44,6 @@ all-electron `aug-cc-pVDZ` on H. Annotated:
 
 ```text
 rks/bhhlyp/aug-cc-pvdz-pp;aug-cc-pvdz    # model/functional/per-atom basis list
-guess(type=huckel,save_mol=false)
 dftgrid(rad_type=becke)                  # Becke radial grid for the XC quadrature
 geom="""
 Br   0.000000000   0.000000000   0.000000000

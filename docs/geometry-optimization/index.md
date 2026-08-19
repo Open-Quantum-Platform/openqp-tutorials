@@ -132,18 +132,9 @@ H   0.5331943294  -0.5331943294  -0.6144692230
 # BHHLYP Kohn-Sham reference with the 6-31g* basis, matching the deck's route.
 job.theory.dft(functional="bhhlyp", basis="6-31g*", reference="rhf")
 
-# Geometry optimization on the native optimizer.
-#   lib="oqp"      -> [optimize] lib=oqp   (native backend)
-#   istate=0       -> [optimize] istate=0  (ground state)
-#   maxit=30       -> [optimize] maxit=30
-#   coordsys/trust -> routed to the [oqp] backend section automatically
-job.workflow.optimize(
-    lib="oqp",
-    istate=0,
-    maxit=30,
-    coordsys="tric",
-    trust=0.2,
-)
+# Geometry optimization on the native optimizer, matching the deck's bare `opt`.
+#   istate=0 -> [optimize] istate=0 (ground state); everything else is a default
+job.workflow.optimize(istate=0)
 
 mol = job.run()
 
@@ -153,9 +144,10 @@ print("Optimized geometry (Bohr):", mol.get_system())
 print(mol.get_results())
 ```
 
-The key mapping: `job.workflow.optimize(...)` is `runtype=optimize`; `lib`,
-`istate`, and `maxit` fill `[optimize]`; and because `lib="oqp"`, `coordsys` and
-`trust` are dispatched to the `[oqp]` section for you.
+The key mapping: `job.workflow.optimize(...)` is `runtype=optimize` and `istate`
+fills `[optimize]`. Optional `lib`, `maxit`, `coordsys`, and `trust` arguments
+map the same way as the `.oqp` options — `lib`/`maxit` to `[optimize]`, and with
+the native backend `coordsys`/`trust` to the `[oqp]` section for you.
 
 ### Transition state: `inputs/hcn_ts.py`
 

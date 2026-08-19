@@ -1,7 +1,7 @@
 """Ground-state geometry optimization of water with the native OpenQP optimizer.
 
 Equivalent to inputs/h2o_optimize.oqp: BHHLYP/6-31G* optimized on the native
-`lib=oqp` backend in TRIC coordinates.
+`lib=oqp` backend with its default coordinate and trust-radius settings.
 """
 
 from oqp.openqp import OpenQP
@@ -23,18 +23,13 @@ H   0.5331943294  -0.5331943294  -0.6144692230
 # matching the .oqp deck's "rks/bhhlyp/6-31g*" route.
 job.theory.dft(functional="bhhlyp", basis="6-31g*", reference="rhf")
 
-# Workflow: geometry optimization on the native optimizer.
-#   lib="oqp"      -> [optimize] lib=oqp  (native backend)
-#   istate=0       -> [optimize] istate=0 (HF/DFT ground state)
-#   maxit=30       -> [optimize] maxit=30
-#   coordsys/trust -> routed to the [oqp] backend section automatically
-job.workflow.optimize(
-    lib="oqp",
-    istate=0,
-    maxit=30,
-    coordsys="tric",
-    trust=0.2,
-)
+# Workflow: geometry optimization on the native optimizer, matching the
+# bare `opt` of the .oqp deck.  istate=0 is the HF/DFT ground state; the
+# backend (lib="oqp"), coordinate system (coordsys="auto"), trust radius
+# (0.2) and cycle cap (maxit=30) are the defaults and are not written.
+# Pass e.g. coordsys="tric", trust=0.1 to change one -- they are routed to
+# the [oqp] backend section automatically.
+job.workflow.optimize(istate=0)
 
 mol = job.run()
 

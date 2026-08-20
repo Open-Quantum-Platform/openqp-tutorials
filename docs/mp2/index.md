@@ -32,11 +32,9 @@ the idea behind the **spin-component-scaled** family:
   entirely (cheaper) and is well suited to Laplace/RI accelerations.
 
 OpenQP computes the two spin components separately, so every preset is just a
-choice of `c_ss` and `c_os`. In OpenQP, MP2 is a **post-SCF** workflow: it first
-converges an HF reference, then adds the correlation energy and reports the total
-`E(HF+MP2)`. An analytic **ground-state gradient** is available on an RHF
-reference, so `mp2/6-31g` also supports `grad` and `opt`; UHF/ROHF MP2 is
-energy-only. The reference can be closed-shell **RHF**,
+choice of `c_ss` and `c_os`. In OpenQP, MP2 is a **post-SCF, energy-only**
+workflow: it first converges an HF reference, then adds the correlation energy and
+reports the total `E(HF+MP2)`. The reference can be closed-shell **RHF**,
 unrestricted **UHF**, or restricted-open-shell **ROHF** (ROHF orbitals are
 semicanonicalized before the correlation step so the energy denominators are well
 defined). For the derivation and the parameterizations behind each preset, see the
@@ -86,10 +84,11 @@ Key points:
   mp2(reference=rhf,variant=custom,same_spin_scale=0.50,opposite_spin_scale=1.10)/6-31g
   ```
 
-- **No driver line means `energy()`**. MP2 also has an analytic **ground-state**
-  gradient, but only on an **RHF** reference: `mp2/6-31g` + `grad` works, while
-  asking for a gradient on the `uhf` reference used here is rejected rather than
-  silently downgraded. Excited-state MP2 gradients do not exist.
+- **No driver line means `energy()`**, which is the only driver released OpenQP
+  accepts for MP2: `mp2/6-31g` + `grad` is rejected with *"MP2 currently supports
+  energy() only"* rather than silently downgraded. (An analytic ground-state MP2
+  gradient on an **RHF** reference has landed on OpenQP's development branch and
+  will appear in a future release; it is not in v1.2.1 or v1.3.0.)
 - **`scf(conv=1e-10)`** tightens the reference convergence — correlation energies
   are sensitive to it. `scf(...)` is an exact call into the legacy `[scf]`
   section, the escape hatch for anything the concise surface does not name; the
